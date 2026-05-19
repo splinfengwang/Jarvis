@@ -72,7 +72,6 @@ def cmd_init(args: argparse.Namespace) -> int:
     # Generate files from templates
     date = now_date()
     files = {
-        "CLAUDE.md": resolve_template("CLAUDE.md.tmpl"),
         ".claude/settings.json": resolve_template("settings.json.tmpl"),
         "知识库/wiki索引.md": resolve_template("wiki索引.md.tmpl"),
         "知识库/术语/术语索引.md": resolve_template("术语索引.md.tmpl"),
@@ -84,13 +83,56 @@ def cmd_init(args: argparse.Namespace) -> int:
         if file_path.exists():
             print(f"  [skip] {rel_path}")
             continue
-        # Variable substitution
         content = content.replace("{{DATE}}", date)
         content = content.replace("{{PROJECT_NAME}}", target.name)
         content = content.replace("{{JARVIS_VERSION}}", "1.0.0")
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content, encoding="utf-8")
         print(f"  [file] {rel_path}")
+
+    # Handle CLAUDE.md — interactive if already exists
+    claude_path = target / "CLAUDE.md"
+    jarvis_ref = (
+        "\n\n---\n"
+        "## Jarvis 行为框架 (v1.0)\n\n"
+        "本项目启用 Jarvis 行为框架。Core（铁律、写入裁决、Topic 生命周期等）由 SessionStart hook 自动注入。\n"
+        "你的**角色和身份**由本文件定义，Jarvis 只约束你的工作方式。\n"
+        "配置见 `jarvis.yaml`。\n"
+    )
+    if claude_path.exists():
+        existing = claude_path.read_text(encoding="utf-8")
+        # Show what's there
+        preview = "\n".join(existing.splitlines()[:8])
+        if len(existing.splitlines()) > 8:
+            preview += f"\n... (共 {len(existing.splitlines())} 行)"
+        print(f"\n  检测到已有 CLAUDE.md ({len(existing.splitlines())} 行):")
+        for line in preview.splitlines():
+            print(f"    | {line[:100]}")
+        print()
+
+        if "jarvis" in existing.lower() and "behavior" in existing.lower():
+            print("  [skip] CLAUDE.md (已有 Jarvis 引用)")
+        else:
+            # Interactive: ask what to do
+            answer = input("  如何处理? [A]追加引用 / [S]跳过 / [R]替换(备份旧文件) (默认=A): ").strip().lower()
+            if answer == "r":
+                backup = target / "CLAUDE.md.bak"
+                claude_path.rename(backup)
+                print(f"  旧文件已备份为 CLAUDE.md.bak")
+                content = resolve_template("CLAUDE.md.tmpl")
+                content = content.replace("{{DATE}}", date).replace("{{PROJECT_NAME}}", target.name).replace("{{JARVIS_VERSION}}", "1.0.0")
+                claude_path.write_text(content, encoding="utf-8")
+                print(f"  [file] CLAUDE.md (新生成)")
+            elif answer == "s":
+                print("  [skip] CLAUDE.md (保留原文件)")
+            else:
+                claude_path.write_text(existing.rstrip() + jarvis_ref)
+                print("  [update] CLAUDE.md (已追加 Jarvis 引用)")
+    else:
+        content = resolve_template("CLAUDE.md.tmpl")
+        content = content.replace("{{DATE}}", date).replace("{{PROJECT_NAME}}", target.name).replace("{{JARVIS_VERSION}}", "1.0.0")
+        claude_path.write_text(content, encoding="utf-8")
+        print(f"  [file] CLAUDE.md")
 
     # Write jarvis.yaml
     config_path = target / "jarvis.yaml"
