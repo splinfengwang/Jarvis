@@ -124,6 +124,8 @@
 
 需要历史上下文时，先 memsearch(scope="memory")；命中不足再扩大 scope="project"。
 
+记忆检索通过可替换的后端适配器实现（见 `references/memory-backend.md`）。默认使用文件系统 grep 搜索（零依赖），可选 OpenViking 语义搜索。
+
 降级策略：语义搜索不可用时 → 读仪表盘 → 本地 grep 搜索 → 对话中说明"记忆检索暂不可用"。
 
 ---

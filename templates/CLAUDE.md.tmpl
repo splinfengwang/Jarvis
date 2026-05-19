@@ -1,0 +1,20 @@
+# {{PROJECT_NAME}}
+
+> 本项目使用 [Jarvis](https://github.com/linfeng/jarvis) (v{{JARVIS_VERSION}}) 作为智能体框架。
+
+## 启动规则
+
+1. 会话启动时，Core 通过 SessionStart hook 自动注入上下文。
+2. Hook 不可用时，手动读取 jarvis 安装目录下的 `core/JARVIS_BOOTSTRAP.md` 并遵循。
+3. Jarvis 的 skill、scripts、references 构成完整的可执行工作流。
+
+## 默认边界
+
+- 不自动修改 Core 文件
+- 不自动知识入库
+- 不把记忆检索命中当事实
+- 写入动作按 Core 写入裁决执行
+
+## 项目配置
+
+见 `jarvis.yaml`。
