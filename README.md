@@ -1,12 +1,68 @@
-# Jarvis
+<p align="center">
+  <h1 align="center">Jarvis</h1>
+  <p align="center"><strong>让 LLM 学会协作，而不是只会聊天。</strong></p>
+  <p align="center">
+    <a href="#安装"><img src="https://img.shields.io/badge/python-%E2%89%A53.10-blue" alt="Python"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+  </p>
+</p>
 
-> LLM-native agent framework for long-term work assistance.
-> An LLM 原生智能体框架，为长期工作助理场景设计。
+---
 
-[![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+## 一句话定位
 
-Jarvis 将 Claude Code 的 hooks、skills、行为规程打包为一个可安装、可配置、可扩展的框架。一次 `pip install`，一行 `jarvis init`，即可在任何项目中获得完整的智能体工作流。
+**Jarvis 是一个 LLM 原生智能体框架。** 它不生成 prompt，不编排 workflow，不做 tool calling 封装。它做一件更底层的事：**在每次会话启动时，把一套完整的行为规程注入 LLM 上下文，让 LLM 成为一个知道"怎么协作、怎么思考、怎么不犯错"的工作助理。**
+
+用一句话说：LangChain 解决"怎么调用"，Jarvis 解决"怎么工作"。
+
+---
+
+## 它解决的问题
+
+长期用 LLM 做工作助理的人都会遇到这三个问题。不是偶尔，是每次：
+
+| 问题 | 现象 |
+|---|---|
+| **上下文失忆** | 新会话从零开始。昨天的决策、设计到一半的方案——全没了 |
+| **缺乏判断力** | LLM 分不清什么是你确认过的、什么是它猜的、什么是搜索命中的。它把推论当事实，把搜索当证据 |
+| **行为退化** | 同一个 LLM，今天知道先读文件再下结论，明天凭记忆乱猜。核心行为跨会话不一致 |
+
+Jarvis 要解决的，不是"让 LLM 变聪明"，而是**让 LLM 变可靠**。
+
+---
+
+## 设计哲学
+
+### 不是库，是规程
+
+大多数 LLM 工具是库——你 import，调用 API，控制流程。Jarvis 是规程——它把"怎么工作"的规则注入到 LLM 的上下文起始位置，让 LLM 自己判断、自己决策、自己遵守纪律。
+
+### 三条铁律
+
+| 铁律 | 防什么 |
+|---|---|
+| 文件读取优先于记忆猜测 | "上次我看过"→ 文件已被改 |
+| 事实确证优先于推论建议 | "我们应该用 X"→ 没说是猜的 |
+| 写入确认优先于自动执行 | "我把你的文件改了"→ 未经确认 |
+
+这三条不是 prompt 里的建议——它们通过 SessionStart hook 每次自动注入，PreToolUse hook 在文件操作层面做门禁。
+
+### 事实与推论必须可区分
+
+Jarvis 强制 LLM 在输出中区分五类信息：**事实**（源文件确认的）、**证据**（可追溯到原文的）、**推论**（Jarvis 归纳的）、**偏好**（用户表达过的）、**待验证问题**（目前不确定的）。推论不标注不能输出。OpenViking 搜索结果只是"线索"，必须回源文件确认。
+
+### 写入不是二元的
+
+不是"能写 / 不能写"。是三级：
+- **记录性写入**：建 Topic、追加讨论记录 → 可自主执行
+- **内容性写入**：修改方案、编辑知识条目 → 先提案，确认后执行
+- **高风险写入**：删除文件、批量迁移、改 Core → 严格审批
+
+判断标准：这次写入会不会改变未来 Jarvis 对业务、知识、规则的判断？
+
+### 插件是可组合的提示词
+
+`{{PLUGIN:SAFETY}}` → 启动时替换为医学安全规则。无插件时占位符删除。插件不修改 Core。
 
 ---
 
@@ -20,163 +76,135 @@ pip install -e .
 
 # 2. 初始化项目
 jarvis init ~/my-project
-
-# 3. 检查安装
-jarvis doctor ~/my-project
-
-# 4. 启动 Claude Code → Core 自动注入
 cd ~/my-project
+
+# 3. 启动 → Core 自动注入
 claude
+```
+
+### 初始化后的项目
+
+```
+my-project/
+├── jarvis.yaml              # 配置（插件、后端、路径）
+├── CLAUDE.md                # 项目入口
+├── 知识库/wiki索引.md
+├── 业务/
+├── platform-ops/
+│   ├── 仪表盘.md            # 工作仪表盘
+│   ├── log.md               # 操作日志
+│   └── topics/              # 工作主题
+└── .claude/                 # → jarvis/skills + jarvis/hooks
+```
+
+### 安装检查
+
+```bash
+jarvis doctor ~/my-project
+# 14 项检查：
+#   [OK] jarvis.yaml
+#   [OK] CLAUDE.md
+#   [OK] core/JARVIS_CORE.md
+#   [OK] .claude/skills/ (14 skills)
+#   [OK] .claude/hooks/ (3 hooks)
+#   [OK] .claude/settings.json
+#   [OK] wiki索引 / 术语索引 / 仪表盘 / 操作日志 / Topic目录
+#   All checks passed.
 ```
 
 ---
 
-## 能力概览
+## 内置能力
 
-| 模块 | 说明 |
+### Core 行为规程（429 行）
+
+身份定义 → 裁决优先级 → 三条铁律 → 会话模式路由 → 协作原则 → 分析/设计路径 → 写入裁决 → 能动性等级 → 回退原则。每次会话启动时自动注入，LLM 不可绕过。
+
+### Skill Pack（13 个）
+
+Topic 创建/冻结/恢复/关闭、知识萃取/入库/反馈、碎片分流、跟进同步、分析线程管理、文件处理、Confluence 读取、状态查询
+
+### Hooks 引擎（3 个）
+
+| Hook | 时机 | 作用 |
+|---|---|---|
+| SessionStart | 会话启动 | 注入 Core + 插件 + 路径映射 |
+| PreToolUse | 写/编辑/Bash | 阻止 Core 修改 + 知识入库确认提醒 |
+| PreCompact | 压缩前 | 提示保存 Topic 状态 |
+
+### 知识库模型（L1-L4/F）
+
+L1 术语与概念 → L2 关系与规则 → L3 判断与决策 → L4 待验证问题 → F 文件处理产物。结构化、可检索、可复用。
+
+### 记忆后端
+
+| 后端 | 说明 |
 |---|---|
-| **Core 行为规程** | 身份定义、裁决优先级、三条铁律、写入裁决（记录/内容/高风险）、会话路由 |
-| **Skill Pack（13个）** | Topic 生命周期（创建/冻结/恢复/关闭）、知识萃取/入库/反馈、碎片分流、跟进同步、分析线程、文件处理 |
-| **Hooks 引擎** | SessionStart（Core 注入 + 插件注入 + 路径映射）、PreToolUse（写权限门禁）、PreCompact（状态保存） |
-| **知识库模型** | L1 术语 / L2 关系与规则 / L3 判断与决策 / L4 待验证问题 / F 文件处理产物 |
-| **领域插件** | 可插拔的安全规则、校验清单、知识分类维度（首个实例：medical-safety） |
-| **记忆后端** | file（零依赖 grep 搜索）+ openviking（语义向量搜索） |
-| **配置化** | jarvis.yaml — paths / plugins / backend 一站式配置 |
-| **CLI 工具** | `jarvis init`（一键生成项目骨架）/ `jarvis doctor`（14 项完整性检查） |
+| file（默认） | grep + 文件系统，零依赖 |
+| openviking | 语义向量搜索，需 openviking-server |
+
+### 配置化
+
+所有路径通过 `jarvis.yaml` 配置，脚本读配置不读硬编码。无配置时 fallback 默认值。
 
 ---
 
 ## 架构
 
 ```
-jarvis/                       # Python package
-├── __init__.py
-├── cli.py                    # jarvis 命令行入口
-├── lib.py                    # 共享库（YAML parser、路径解析、写入裁决）
-├── core/                     # JARVIS_CORE.md + JARVIS_BOOTSTRAP.md
-├── references/               # 16 个参考规范
-├── skills/                   # 13 个标准化 skill (jarvis-*)
-├── scripts/                  # 19 个运维脚本
-├── hooks/                    # 3 个 hook 脚本
-├── plugins/
-│   └── medical/              # 医学安全插件（5 模块）
-├── backends/
-│   ├── file/                 # 默认文件后端
-│   └── openviking/           # OpenViking 语义搜索
-└── templates/                # 项目模板（CLAUDE.md / 仪表盘 / wiki索引 / Topic骨架）
-```
-
-### 注入流程
-
-```
-Claude Code 启动
+每次会话启动
     │
-    ▼
-SessionStart hook (jarvis-core-inject.sh)
-    │
-    ├─ 1. 读取 jarvis/CORE.md
+    ├─ 1. SessionStart hook 读 jarvis/CORE.md
     ├─ 2. 读项目 jarvis.yaml → 激活的插件列表
     ├─ 3. 替换 {{PLUGIN:SAFETY}} {{PLUGIN:VALIDATION}} {{PLUGIN:CHECKLIST}}
-    ├─ 4. 删除未匹配占位符
-    ├─ 5. 注入 [Jarvis Path Config] 路径映射表
+    ├─ 4. 删除未匹配占位符（无插件时框架正常运行）
+    ├─ 5. 注入 [Jarvis Path Config] 路径映射
     │
     ▼
-LLM 获得完整行为基线 + 领域规则 + 路径映射
-```
-
-### 知识库目录树
-
-`jarvis init` 创建的标准项目结构：
-
-```
-<项目>/
-├── jarvis.yaml               # 框架配置
-├── CLAUDE.md                 # 项目入口
-├── 知识库/
-│   ├── wiki索引.md           # 全站导航
-│   └── 术语/
-│       └── 术语索引.md
-├── 业务/                     # 分析文档按域组织
-├── platform-ops/
-│   ├── 仪表盘.md             # 工作仪表盘
-│   ├── log.md                # 操作日志
-│   └── topics/               # 工作主题
-└── .claude/
-    ├── skills/  → jarvis/skills/
-    └── hooks/   → jarvis/hooks/
+LLM 获得完整行为基线 + 领域规则 + 路径映射 → 开始工作
 ```
 
 ---
 
-## 插件系统
+## 边界与反制
 
-领域特定的安全规则、校验清单、知识分类通过插件挂载。Core 中使用 `{{PLUGIN:NAME}}` 占位符，启动时自动注入。
+Jarvis 内置了"抗退化"机制——预置了 LLM 最常见的合理化借口和反制策略：
 
-### 内置插件：medical-safety
-
-```yaml
-# jarvis.yaml
-plugins:
-  - medical-safety
-```
-
-5 个模块：`safety`（医学决策边界 + 安全参数强制标注）、`validation`（三视角校验 + 知识引用规则）、`checklist`（方案提交检查清单）、`taxonomy`（术语分类维度）
-
-### 自定义插件
-
-```
-plugins/<name>/
-├── plugin.yaml       # name, version, description, provides
-├── safety.md         # → {{PLUGIN:SAFETY}}
-├── validation.md     # → {{PLUGIN:VALIDATION}}
-└── checklist.md      # → {{PLUGIN:CHECKLIST}}
-```
-
-`plugin.yaml` 中 `provides` 的键名对应 Core 中的占位符。无插件时，占位符行被删除，框架正常运行。
+| LLM 会说 | Jarvis 的反制 |
+|---|---|
+| "上次我们讨论了…" | 从 Topic 快照或 JSONL 确认，不凭记忆 |
+| "这个写入是记录性的" | 对写入裁决表判断 |
+| "先假设…" | 用工具验证，找到证据再下结论 |
+| "已经读过了" | 文件可能已被修改，重新读 |
+| "OpenViking 说…" | 搜索结果是线索，必须回源文件确认 |
+| "这个应该没问题" | 写权限、安全边界没有"应该" |
 
 ---
 
-## 配置参考
+## 与同类项目的区别
 
-```yaml
-# jarvis.yaml — 项目配置
-jarvis_version: "1.0.0"
-jarvis_home: "../../jarvis/jarvis"  # 指向 jarvis package 目录的相对路径
+Jarvis 不和其他 LLM 工具竞争"模型调用""工作流编排""提示词管理"。它的定位是**行为规程层**——在 LLM 的 context 顶部注入一套让它学会协作的规则系统。
 
-paths:
-  knowledge_base: 知识库
-  wiki_index: 知识库/wiki索引.md
-  terms_dir: 知识库/术语
-  terms_index: 知识库/术语/术语索引.md
-  business_dir: 业务
-  ops_dir: platform-ops
-  dashboard: platform-ops/仪表盘.md
-  log: platform-ops/log.md
-  topics: platform-ops/topics
-
-plugins:
-  - medical-safety
-
-backend: file  # file | openviking
-```
+| 对比维度 | 典型 Agent 框架 | Jarvis |
+|---|---|---|
+| 关注点 | 怎么调用模型、怎么串联工具 | LLM 怎么思考、怎么判断、怎么自律 |
+| 核心机制 | tool calling + workflow | SessionStart 注入行为规程 |
+| 状态管理 | 外部数据库或向量存储 | 文件系统 + git（Topic 四件套） |
+| 插件模型 | 代码级别的 function/tool | 提示词模块（`{{PLUGIN:NAME}}`） |
+| 安全模型 | API key 权限 | 三级写入裁决 + hook 门禁 |
+| 知识管理 | RAG pipeline | L1-L4/F 分层 + 证据归属标注 |
 
 ---
 
-## 命令
+## 历史：从实战中长出来的框架
 
-```bash
-jarvis init [target]     # 初始化项目：目录树 + 软链接 + 模板 + jarvis.yaml
-jarvis doctor [target]   # 14 项完整性检查
-```
+Jarvis 不是一次性设计出来的。它从过去两年在 KF580 精准氧疗平台项目中的实际使用中逐步演进出来。
 
----
+- **2024-2025**：项目内 `AGENT.md` → grow 到 ~1000 行，包含了所有行为规则
+- **v0.1-v0.3**：拆分为 Runtime（Core + Skills + Scripts + References + Hooks），5 个 Gate 真实任务验证
+- **v1.0**：从 KF580 剥离为独立项目，Python package 化，pip install 可用，通过 8 轮对抗审查
 
-## 历史
-
-Jarvis 起源于 KF580 精准氧疗平台项目，最初是嵌入在项目内的单一 `AGENT.md` 文件。经过 v3.0 重构、v3.4 规程迭代、Runtime 架构迭代、6 阶段产品化剥离，演进为当前 v1.0 独立框架。
-
-- v0.1-v0.3：嵌入 KF580 项目的 Runtime
-- v1.0：独立 Python package，pip 可安装
+这个框架的每一行规程，背后都对应着一个在真实工作中踩过的坑。它不是设计出来的，是修出来的。
 
 ---
 
