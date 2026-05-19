@@ -1,0 +1,12 @@
+# Jarvis .gitignore
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.*
+.venv/
+node_modules/
+.DS_Store
+*.egg-info/
+dist/
+build/

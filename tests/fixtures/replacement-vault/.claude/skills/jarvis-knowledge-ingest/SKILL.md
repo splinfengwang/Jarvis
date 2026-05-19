@@ -1,0 +1,70 @@
+---
+name: jarvis-knowledge-ingest
+description: 按林峰确认范围把 Evidence Pack 入库，或给出人工入库计划。用于“A 组全确认”“这几条确认入库”。只处理明确确认范围。
+---
+
+# jarvis-knowledge-ingest
+
+trigger:
+- “A 组全确认”
+- “这几条确认入库”
+- “把确认范围写入知识库”
+
+non_trigger:
+- 只要求萃取或整理。
+- 没有 Evidence Pack。
+- 用户没有明确确认范围。
+
+inputs:
+- Evidence Pack。
+- 林峰确认范围。
+- 目标知识库路径或既有索引。
+
+outputs:
+- 入库计划。
+- 自动写入的条目列表。
+- 需要人工入库的条目列表。
+- 不写入条目及原因。
+- 索引和日志更新结果。
+
+required_references:
+- `智能体/贾维斯/runtime-v0.1/references/evidence-pack-spec.md`
+- `智能体/贾维斯/runtime-v0.1/references/knowledge-model-and-ingest.md`
+- `智能体/贾维斯/runtime-v0.1/references/medical-and-design-safety.md`
+
+allowed_scripts:
+- `智能体/贾维斯/runtime-v0.1/scripts/ingest_evidence_pack.py`
+- `智能体/贾维斯/runtime-v0.1/scripts/validate_links.py`
+- `智能体/贾维斯/runtime-v0.1/scripts/knowledge_link_stats.py`
+- `智能体/贾维斯/runtime-v0.1/scripts/append_operation_log.py`
+
+write_level:
+- content_write after confirmation
+
+confirmation_rules:
+- 只处理林峰明确确认的组或条目。
+- 医学参数、安全边界、判断类内容仍需单独确认。
+- 不能把 `candidate_only` 或 `needs_source` 条目写入正式知识库。
+- v0.2 自动脚本可处理以下条目：
+  - `knowledge_layer: L1` 且 `memory_type: semantic` 的术语项（自动创建术语文件）
+  - `knowledge_layer: L2/L3/L4/F` 且 `target_path` 明确、`requires_separate_confirmation=False` 的条目（自动追加到业务文档）
+- 以下条目必须跳过，输出人工入库计划：
+  - `requires_separate_confirmation=True`
+  - 医学/安全类关键词（血氧、禁忌、终止等）命中
+  - `target_path` 缺失的非 L1 条目
+- `--dry-run-scope` 参数可预览指定组全部可入库条目（如 `--dry-run-scope B`）
+- 写入成功后追加一条 `platform-ops/log.md` 操作日志。
+
+fallback_rules:
+- Evidence Pack 字段不完整时停止。
+- 目标路径不明确时先确认。
+- 写入后必须验证链接和索引。
+- 若确认范围内只有非 L1 / 非 semantic 条目，输出人工入库计划，不调用自动写入脚本。
+
+acceptance_cases:
+- “A 组全确认” -> 只处理 A 组。
+- `needs_source` 条目 -> 不入库。
+- 医学/判断类 -> 单独确认后才写。
+- 非 L1 且 `target_path` 明确 -> 自动写入目标业务文档。
+- 非 L1 且 `target_path` 缺失 -> 阻断并报错。
+- fixture 入库后同步 `知识库/wiki索引.md`、`知识库/术语/术语索引.md`，并通过链接/引用校验。

@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "id": "B9",
+      "group": "B",
+      "title": "运行时阶段结论",
+      "claim": "Jarvis Runtime 的阶段结论应回写到业务文档中统一沉淀。",
+      "knowledge_type": "decision",
+      "knowledge_layer": "L3",
+      "memory_type": "episodic",
+      "source_type": "topic",
+      "source_path": "platform-ops/topics/20260516_贾维斯运行时架构迭代/讨论记录.md",
+      "source_excerpt": "阶段结论需要归档到业务文档。",
+      "evidence_level": "primary",
+      "confidence": "high",
+      "verification_status": "confirmed",
+      "usage_scope": "knowledge_base",
+      "can_ingest": "after_confirmation",
+      "linked_topic": "贾维斯运行时架构迭代",
+      "related_entries": [],
+      "target_path": "业务/测试/运行时知识汇总.md",
+      "requires_separate_confirmation": false
+    }
+  ]
+}
