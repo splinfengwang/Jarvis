@@ -100,11 +100,28 @@ try:
     jarvis_home = config.get('jarvis_home', os.path.dirname(os.path.dirname(__file__)))
     plugins = config.get('plugins', [])
 
+    # ── Build name→dir index for plugin resolution ──
+    plugins_base = os.path.join(jarvis_home, 'plugins')
+    name_to_dir = {}
+    if os.path.isdir(plugins_base):
+        for entry in os.listdir(plugins_base):
+            entry_path = os.path.join(plugins_base, entry)
+            if not os.path.isdir(entry_path):
+                continue
+            py = os.path.join(entry_path, 'plugin.yaml')
+            if os.path.isfile(py):
+                p = read_plugin_yaml(py)
+                name_to_dir[p.get('name', entry)] = entry_path
+            name_to_dir[entry] = entry_path
+
     # ── Plugin injection ──
     injections = {}
     for plugin_name in plugins:
-        plugin_dir = os.path.join(jarvis_home, 'plugins', plugin_name)
+        # Resolve by directory name first, then by manifest name
+        plugin_dir = os.path.join(plugins_base, plugin_name)
         if not os.path.isdir(plugin_dir):
+            plugin_dir = name_to_dir.get(plugin_name, '')
+        if not plugin_dir or not os.path.isdir(plugin_dir):
             continue
         plugin_yaml = os.path.join(plugin_dir, 'plugin.yaml')
         if not os.path.isfile(plugin_yaml):
