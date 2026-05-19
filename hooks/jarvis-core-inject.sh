@@ -29,11 +29,12 @@ if [ -f "$CORE_PATH" ]; then
     # Plugin injection: replace {{PLUGIN:NAME}} placeholders with plugin module content
     # Path config injection: append semantic→actual path mapping
     if [ -f "$JARVIS_YAML" ] && command -v python3 &>/dev/null; then
-        CORE_CONTENT=$(python3 - "$JARVIS_YAML" "$CORE_CONTENT" << 'PYEOF'
+        CORE_CONTENT=$(python3 - "$JARVIS_YAML" "$CORE_CONTENT" "$JARVIS_HOME" << 'PYEOF'
 import sys, os, re
 
 jarvis_yaml_path = sys.argv[1]
 core_content = sys.argv[2]
+jarvis_home = sys.argv[3]  # Resolved by bash from hook symlink — portable, no absolute paths
 
 # ── Simple YAML parser (no PyYAML dependency) ──
 def parse_jarvis_yaml(path):
@@ -65,11 +66,6 @@ def parse_jarvis_yaml(path):
             plugins.append(stripped[2:].strip().strip('"').strip("'"))
         elif in_plugins and not line.startswith('  ') and not stripped.startswith('-'):
             in_plugins = False
-    # Get jarvis_home
-    for line in raw.splitlines():
-        stripped = line.strip()
-        if stripped.startswith('jarvis_home:'):
-            result['jarvis_home'] = stripped.split(':', 1)[1].strip().strip('"').strip("'")
     result['paths'] = paths
     result['plugins'] = plugins
     return result
@@ -97,7 +93,6 @@ def read_plugin_yaml(path):
 
 try:
     config = parse_jarvis_yaml(jarvis_yaml_path)
-    jarvis_home = config.get('jarvis_home', os.path.dirname(os.path.dirname(__file__)))
     plugins = config.get('plugins', [])
 
     # ── Build name→dir index for plugin resolution ──
