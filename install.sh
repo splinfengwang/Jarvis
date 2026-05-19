@@ -17,11 +17,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+JARVIS_PKG="$SCRIPT_DIR/jarvis"  # Python package dir (core/hooks/skills/templates live here)
 TARGET="${1:-$(pwd)}"
 
 echo "=== Jarvis v1.0.0 Install ==="
 echo "Target: $TARGET"
-echo "Jarvis:  $SCRIPT_DIR"
+echo "Jarvis:  $JARVIS_PKG"
 
 # ---------------------------------------------------------------------------
 # 1. Create .claude directories
@@ -33,7 +34,7 @@ mkdir -p "$TARGET/.claude/skills" "$TARGET/.claude/hooks"
 # ---------------------------------------------------------------------------
 echo ""
 echo "--- Linking skills ---"
-for skill_dir in "$SCRIPT_DIR/skills"/*/; do
+for skill_dir in "$JARVIS_PKG/skills"/*/; do
     skill_name=$(basename "$skill_dir")
     target_link="$TARGET/.claude/skills/$skill_name"
     if [ -L "$target_link" ] || [ -d "$target_link" ]; then
@@ -49,7 +50,7 @@ done
 # ---------------------------------------------------------------------------
 echo ""
 echo "--- Linking hooks ---"
-for hook in "$SCRIPT_DIR/hooks"/*.sh; do
+for hook in "$JARVIS_PKG/hooks"/*.sh; do
     hook_name=$(basename "$hook")
     target_link="$TARGET/.claude/hooks/$hook_name"
     if [ -L "$target_link" ] || [ -f "$target_link" ]; then
@@ -160,7 +161,7 @@ fi
 # ---------------------------------------------------------------------------
 # 6. Generate jarvis.yaml if missing
 # ---------------------------------------------------------------------------
-JARVIS_HOME="$SCRIPT_DIR"
+JARVIS_HOME="$JARVIS_PKG"
 if [ -f "$TARGET/jarvis.yaml" ]; then
     echo "  [skip] jarvis.yaml already exists"
 else
