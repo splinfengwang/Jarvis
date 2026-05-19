@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared helpers for Jarvis Runtime v0.1 scripts."""
+"""Shared helpers for Jarvis v1.0 scripts."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import difflib
 import json
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -23,6 +23,119 @@ STATUS_DISPLAY = {
 }
 
 DISPLAY_TO_STATUS = {v: k for k, v in STATUS_DISPLAY.items()}
+
+# Default paths — used as fallback when jarvis.yaml is missing
+_DEFAULT_PATHS: dict[str, str] = {
+    "knowledge_base": "知识库",
+    "wiki_index": "知识库/wiki索引.md",
+    "terms_dir": "知识库/术语",
+    "terms_index": "知识库/术语/术语索引.md",
+    "business_dir": "业务",
+    "ops_dir": "platform-ops",
+    "dashboard": "platform-ops/仪表盘.md",
+    "log": "platform-ops/log.md",
+    "topics": "platform-ops/topics",
+}
+
+_config_cache: dict[str, dict] = {}
+
+
+def _parse_simple_yaml(text: str) -> dict:
+    """Minimal YAML parser for jarvis.yaml — no PyYAML dependency.
+
+    Handles top-level scalars, lists, and one-level-deep mappings (paths section).
+    """
+    result: dict = {}
+    lines = text.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            i += 1
+            continue
+        # Nested mapping (indented key: value) — paths section
+        if line.startswith('  ') and ':' in stripped and not stripped.startswith('-'):
+            i += 1
+            continue  # handled by section parsers below
+        # List item
+        if stripped.startswith('- '):
+            i += 1
+            continue  # handled by section parsers below
+        # Top-level key: value
+        if ':' in stripped:
+            key, _, value = stripped.partition(':')
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if value == '':
+                # Could be start of a mapping section or list
+                result[key] = _parse_section(lines, i)
+            else:
+                result[key] = value
+        i += 1
+    return result
+
+
+def _parse_section(lines: list[str], start: int) -> dict | list:
+    """Parse an indented mapping or list section starting at start+1."""
+    section: dict = {}
+    section_list: list = []
+    is_list = False
+    i = start + 1
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            i += 1
+            continue
+        if not line.startswith('  '):
+            break
+        if stripped.startswith('- '):
+            is_list = True
+            section_list.append(stripped[2:].strip().strip('"').strip("'"))
+        elif ':' in stripped:
+            k, _, v = stripped.partition(':')
+            section[k.strip()] = v.strip().strip('"').strip("'")
+        i += 1
+    if is_list:
+        return section_list
+    return section
+
+
+def load_jarvis_config(root: Path) -> dict:
+    """Load jarvis.yaml from project root. Returns parsed config dict.
+
+    Result is cached per root path so repeated calls are cheap.
+    """
+    root_key = str(root.resolve())
+    if root_key in _config_cache:
+        return _config_cache[root_key]
+    config_path = root / "jarvis.yaml"
+    if config_path.is_file():
+        try:
+            _config_cache[root_key] = _parse_simple_yaml(config_path.read_text(encoding="utf-8"))
+        except Exception:
+            _config_cache[root_key] = {}
+    else:
+        _config_cache[root_key] = {}
+    return _config_cache[root_key]
+
+
+def get_path(key: str, root: Path | None = None) -> Path:
+    """Get a configured path. Falls back to default if jarvis.yaml missing or key absent.
+
+    Args:
+        key: Path key (e.g. 'dashboard', 'wiki_index', 'topics')
+        root: Project root. Defaults to current working directory.
+    """
+    if root is None:
+        root = Path.cwd()
+    config = load_jarvis_config(root)
+    paths = config.get("paths", {})
+    if isinstance(paths, dict) and key in paths:
+        return root / paths[key]
+    return root / _DEFAULT_PATHS.get(key, key)
+
 
 SESSION_TABLE_HEADER = "| 工具 | 会话标识 | JSONL 路径 | 工作区路径 | 日期 |"
 SESSION_TABLE_SEPARATOR = "|------|------|------|------|------|"
@@ -280,11 +393,11 @@ def print_validation(errors: list[str], warnings: list[str] | None = None) -> in
 
 
 def dashboard_path(root: Path) -> Path:
-    return root / "platform-ops" / "仪表盘.md"
+    return get_path("dashboard", root)
 
 
 def topics_root(root: Path) -> Path:
-    return root / "platform-ops" / "topics"
+    return get_path("topics", root)
 
 
 def escape_wikilink_pipe(text: str) -> str:

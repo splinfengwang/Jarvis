@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Append one entry to platform-ops/log.md."""
+"""Append one entry to the project log (configured in jarvis.yaml)."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from jarvis_lib import (
     add_common_args,
     apply_changes,
     ensure_single_line_insert,
+    get_path,
     now_date,
     prepare_change,
     print_validation,
@@ -26,7 +27,7 @@ def main() -> int:
     args = parser.parse_args()
 
     root = vault_root(args.vault_root)
-    log = root / "platform-ops" / "log.md"
+    log = get_path("log", root)
     before = read_text(log)
     if not before:
         before = "# 操作日志\n\n> append-only 操作记录。格式：`## [YYYY-MM-DD] 操作类型 | 简述`\n\n---\n"

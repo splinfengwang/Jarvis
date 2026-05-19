@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from jarvis_lib import list_markdown_files, print_validation, read_text, vault_root, write_json_result
+from jarvis_lib import get_path, list_markdown_files, print_validation, read_text, vault_root, write_json_result
 
 
 STALE_DAYS = 14
@@ -46,7 +46,7 @@ def main() -> int:
     args = parser.parse_args()
 
     root = vault_root(args.vault_root)
-    term_dir = root / "知识库" / "术语"
+    term_dir = get_path("terms_dir", root)
     if not term_dir.exists():
         return print_validation([f"term directory not found: {term_dir}"])
 

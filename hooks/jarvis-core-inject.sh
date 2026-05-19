@@ -1,6 +1,6 @@
 #!/bin/bash
 # Jarvis Runtime — SessionStart hook: inject JARVIS_CORE.md via additionalContext
-# Supports plugin injection from jarvis.yaml
+# Supports plugin injection and path config mapping from jarvis.yaml
 set -euo pipefail
 
 # Resolve jarvis home from hook's own location (works through symlinks)
@@ -22,55 +22,59 @@ escape_for_json() {
 
 context_parts=""
 
-# ── Core 注入 (with plugin injection) ──
+# ── Core 注入 (plugin injection + path config) ──
 if [ -f "$CORE_PATH" ]; then
     CORE_CONTENT=$(cat "$CORE_PATH")
 
     # Plugin injection: replace {{PLUGIN:NAME}} placeholders with plugin module content
+    # Path config injection: append semantic→actual path mapping
     if [ -f "$JARVIS_YAML" ] && command -v python3 &>/dev/null; then
         CORE_CONTENT=$(python3 - "$JARVIS_YAML" "$CORE_CONTENT" << 'PYEOF'
-import sys, os
+import sys, os, re
 
 jarvis_yaml_path = sys.argv[1]
 core_content = sys.argv[2]
 
-# Simple YAML parser for jarvis.yaml (avoid PyYAML dependency)
-def read_simple_yaml(path):
-    """Read a minimal YAML file and return top-level scalars and lists."""
+# ── Simple YAML parser (no PyYAML dependency) ──
+def parse_jarvis_yaml(path):
     result = {}
     with open(path) as f:
-        current_key = None
-        current_list = None
-        for line in f:
-            stripped = line.rstrip()
-            if not stripped or stripped.startswith('#'):
-                continue
-            # list item
-            if stripped.startswith('- ') or stripped.startswith('-'):
-                item = stripped.lstrip('- ').strip().strip('"').strip("'")
-                if current_key and current_list is not None:
-                    current_list.append(item)
-                continue
-            # key: value
-            if ':' in stripped:
-                # Check if it's a nested key
-                indent = len(line) - len(line.lstrip())
-                if indent == 0 or current_key is None:
-                    parts = stripped.split(':', 1)
-                    key = parts[0].strip()
-                    value = parts[1].strip().strip('"').strip("'") if len(parts) > 1 else ''
-                    if value == '':
-                        current_key = key
-                        current_list = []
-                        result[key] = current_list
-                    else:
-                        current_key = key
-                        result[key] = value
-                        current_list = None
+        raw = f.read()
+    # Parse paths section
+    in_paths = False
+    in_plugins = False
+    paths = {}
+    plugins = []
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            continue
+        if stripped == 'paths:':
+            in_paths = True
+            continue
+        if stripped == 'plugins:':
+            in_plugins = True
+            in_paths = False
+            continue
+        if in_paths and ':' in stripped and line.startswith('  '):
+            k, v = stripped.split(':', 1)
+            paths[k.strip()] = v.strip().strip('"').strip("'")
+        elif in_paths and not line.startswith('  '):
+            in_paths = False
+        if in_plugins and stripped.startswith('- '):
+            plugins.append(stripped[2:].strip().strip('"').strip("'"))
+        elif in_plugins and not line.startswith('  ') and not stripped.startswith('-'):
+            in_plugins = False
+    # Get jarvis_home
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if stripped.startswith('jarvis_home:'):
+            result['jarvis_home'] = stripped.split(':', 1)[1].strip().strip('"').strip("'")
+    result['paths'] = paths
+    result['plugins'] = plugins
     return result
 
 def read_plugin_yaml(path):
-    """Read a plugin.yaml and return provides dict."""
     result = {'provides': {}}
     with open(path) as f:
         in_provides = False
@@ -80,7 +84,7 @@ def read_plugin_yaml(path):
                 continue
             if stripped.startswith('name:'):
                 result['name'] = stripped.split(':', 1)[1].strip()
-            elif stripped.startswith('provides:'):
+            elif stripped == 'provides:':
                 in_provides = True
             elif in_provides and ':' in stripped and not stripped.startswith(' '):
                 in_provides = False
@@ -92,13 +96,11 @@ def read_plugin_yaml(path):
     return result
 
 try:
-    yaml_config = read_simple_yaml(jarvis_yaml_path)
-    jarvis_home = yaml_config.get('jarvis_home', os.path.dirname(os.path.dirname(__file__)))
-    plugins = yaml_config.get('plugins', [])
-    if isinstance(plugins, str):
-        plugins = [plugins]
+    config = parse_jarvis_yaml(jarvis_yaml_path)
+    jarvis_home = config.get('jarvis_home', os.path.dirname(os.path.dirname(__file__)))
+    plugins = config.get('plugins', [])
 
-    # Build injection map
+    # ── Plugin injection ──
     injections = {}
     for plugin_name in plugins:
         plugin_dir = os.path.join(jarvis_home, 'plugins', plugin_name)
@@ -113,22 +115,38 @@ try:
             if os.path.isfile(module_path):
                 with open(module_path) as mf:
                     injections[module_name] = mf.read().strip()
+
+    for module_name, content in injections.items():
+        placeholder = '{{PLUGIN:' + module_name + '}}'
+        if placeholder in core_content:
+            core_content = core_content.replace(placeholder, content)
+
+    # Remove unmatched {{PLUGIN:*}} lines
+    lines = core_content.split('\n')
+    filtered = [line for line in lines if '{{PLUGIN:' not in line]
+    core_content = '\n'.join(filtered)
+
+    # ── Path config injection ──
+    label_map = {
+        "dashboard": "仪表盘", "log": "操作日志", "topics": "Topic目录",
+        "wiki_index": "wiki索引", "terms_index": "术语索引",
+        "terms_dir": "术语目录", "knowledge_base": "知识库",
+        "business_dir": "业务目录", "ops_dir": "平台运维",
+    }
+    path_lines = ["[Jarvis Path Config — semantic to actual file mapping]"]
+    path_lines.append("Use these paths when skills reference files by name:")
+    paths = config.get('paths', {})
+    for key, value in paths.items():
+        label = label_map.get(key, key)
+        path_lines.append(f"- {label} -> {value}")
+    path_lines.append("")
+    core_content = core_content + "\n" + "\n".join(path_lines)
+
 except Exception:
-    injections = {}
-
-# Perform replacements
-import re
-for module_name, content in injections.items():
-    placeholder = '{{' + '{{PLUGIN:' + module_name + '}}' + '}}'
-    # Actually the placeholder is {{PLUGIN:NAME}}
-    placeholder = '{{PLUGIN:' + module_name + '}}'
-    if placeholder in core_content:
-        core_content = core_content.replace(placeholder, content)
-
-# Remove unmatched {{PLUGIN:*}} placeholders (whole line)
-lines = core_content.split('\n')
-filtered = [line for line in lines if '{{PLUGIN:' not in line]
-core_content = '\n'.join(filtered)
+    # On any error, just remove unmatched placeholders
+    lines = core_content.split('\n')
+    filtered = [line for line in lines if '{{PLUGIN:' not in line]
+    core_content = '\n'.join(filtered)
 
 print(core_content)
 PYEOF
