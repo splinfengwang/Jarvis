@@ -1,0 +1,18 @@
+name: medical-safety
+version: 1.0.0
+description: 医学领域安全规则、多视角校验、文档检查清单与知识分类维度
+provides:
+  SAFETY: safety.md
+  VALIDATION: validation.md
+  CHECKLIST: checklist.md
+  TAXONOMY: taxonomy.md
+parameters:
+  safety_parameter_types:
+    - 禁忌症
+    - 终止标准
+    - 安全范围
+    - 特殊人群限制
+  perspectives:
+    - 医生: 专业精准、可追溯、可决策
+    - 患者: 可理解、可操作、少焦虑
+    - 亲友: 能关怀、不过度干预
