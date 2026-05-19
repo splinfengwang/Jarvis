@@ -8,7 +8,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from jarvis_lib import list_markdown_files, print_validation, read_text, vault_root, write_json_result
+from jarvis.lib import list_markdown_files, print_validation, read_text, vault_root, write_json_result
 
 
 DEFAULT_SCOPES = ["知识库", "业务", "platform-ops/topics"]

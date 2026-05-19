@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from jarvis_lib import get_path, list_markdown_files, print_validation, read_text, vault_root, write_json_result
+from jarvis.lib import get_path, list_markdown_files, print_validation, read_text, vault_root, write_json_result
 
 
 STALE_DAYS = 14

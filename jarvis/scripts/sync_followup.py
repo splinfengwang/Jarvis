@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 
-from jarvis_lib import add_common_args, apply_changes, dashboard_path, prepare_change, print_validation, read_text, split_markdown_table_row, vault_root
+from jarvis.lib import add_common_args, apply_changes, dashboard_path, prepare_change, print_validation, read_text, split_markdown_table_row, vault_root
 
 
 FOLLOWUP_HEADER = "| 事项 | 截止/窗口 | 状态 | 动作 |"

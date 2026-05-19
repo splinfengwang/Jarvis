@@ -169,7 +169,7 @@ def commit_memory(
     finally:
         if temp_path:
             try:
-                from jarvis_lib import trash_path
+                from jarvis.lib import trash_path
                 trash_path(temp_path)
             except Exception:
                 pass

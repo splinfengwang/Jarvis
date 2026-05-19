@@ -7,7 +7,7 @@ import argparse
 import re
 from pathlib import Path
 
-from jarvis_lib import list_markdown_files, print_validation, read_text, vault_root
+from jarvis.lib import list_markdown_files, print_validation, read_text, vault_root
 
 
 def wikilink_target(raw: str) -> str:

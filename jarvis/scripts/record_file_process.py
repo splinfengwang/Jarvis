@@ -7,7 +7,7 @@ import argparse
 import re
 from pathlib import Path
 
-from jarvis_lib import add_common_args, apply_changes, now_date, prepare_change, print_validation, read_text, vault_root
+from jarvis.lib import add_common_args, apply_changes, now_date, prepare_change, print_validation, read_text, vault_root
 
 
 def slugify(text: str) -> str:

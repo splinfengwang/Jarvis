@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jarvis_lib import load_jarvis_config
+from jarvis.lib import load_jarvis_config
 
 
 def get_backend(project_root: Path | None = None):

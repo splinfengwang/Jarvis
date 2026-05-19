@@ -7,7 +7,7 @@ import argparse
 import re
 from pathlib import Path
 
-from jarvis_lib import add_common_args, apply_changes, prepare_change, print_validation, read_text, set_frontmatter_status, vault_root
+from jarvis.lib import add_common_args, apply_changes, prepare_change, print_validation, read_text, set_frontmatter_status, vault_root
 
 
 def ensure_feedback_section(text: str) -> str:

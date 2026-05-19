@@ -9,7 +9,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from jarvis_lib import (
+from jarvis.lib import (
     add_common_args,
     apply_changes,
     now_date,

@@ -7,7 +7,7 @@ import argparse
 import re
 from pathlib import Path
 
-from jarvis_lib import STATUS_DISPLAY, dashboard_path, dashboard_table_bounds, print_validation, read_text, split_markdown_table_row, vault_root
+from jarvis.lib import STATUS_DISPLAY, dashboard_path, dashboard_table_bounds, print_validation, read_text, split_markdown_table_row, vault_root
 
 
 def validate_topic_table(root: Path, lines: list[str], table_start: int, table_end: int, label: str) -> tuple[list[str], list[str]]:

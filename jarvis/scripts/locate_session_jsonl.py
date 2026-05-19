@@ -7,7 +7,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
-from jarvis_lib import print_validation, write_json_result
+from jarvis.lib import print_validation, write_json_result
 
 
 def candidate_roots(tool: str, home: Path) -> list[Path]:

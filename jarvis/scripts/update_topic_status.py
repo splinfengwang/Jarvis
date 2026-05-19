@@ -7,7 +7,7 @@ import argparse
 import re
 from pathlib import Path
 
-from jarvis_lib import (
+from jarvis.lib import (
     STATUS_DISPLAY,
     add_common_args,
     apply_changes,

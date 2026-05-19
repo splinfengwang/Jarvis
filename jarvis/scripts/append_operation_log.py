@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 
-from jarvis_lib import (
+from jarvis.lib import (
     add_common_args,
     apply_changes,
     ensure_single_line_insert,

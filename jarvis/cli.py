@@ -16,7 +16,7 @@ def now_date() -> str:
 
 def find_jarvis_home() -> Path:
     """Resolve jarvis installation directory (parent of this script's directory)."""
-    return Path(__file__).resolve().parent.parent
+    return Path(__file__).resolve().parent
 
 
 def resolve_template(name: str) -> str:
@@ -206,7 +206,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     if config.is_file():
         import subprocess
         try:
-            import jarvis_lib
+            import jarvis.lib
             be = jarvis_lib.load_jarvis_config(target).get("backend", "file")
             print(f"  [OK]   backend: {be}")
         except Exception:

@@ -7,7 +7,7 @@ import argparse
 import re
 from pathlib import Path
 
-from jarvis_lib import (
+from jarvis.lib import (
     add_common_args,
     add_session_args,
     append_session_row,
