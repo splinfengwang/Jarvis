@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Jarvis CLI — init and doctor commands."""
+"""Jarvis CLI — lifecycle management commands."""
 
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+
+JARVIS_VERSION = "1.0.0"
 
 
 def now_date() -> str:
@@ -27,12 +31,24 @@ def resolve_template(name: str) -> str:
     return ""
 
 
+def load_project_config(project_root: Path) -> dict | None:
+    """Load jarvis.yaml from a project. Returns None if not initialized."""
+    config_path = project_root / "jarvis.yaml"
+    if not config_path.is_file():
+        return None
+    try:
+        from jarvis.lib import load_jarvis_config
+        return load_jarvis_config(project_root)
+    except Exception:
+        return None
+
+
 def cmd_init(args: argparse.Namespace) -> int:
     """Initialize a new Jarvis project."""
     target = Path(args.target).resolve()
     jarvis_home = find_jarvis_home()
 
-    print(f"Jarvis v1.0 — init")
+    print(f"Jarvis v{JARVIS_VERSION} — init")
     print(f"  Target: {target}")
     print(f"  Jarvis: {jarvis_home}")
     print()
@@ -76,7 +92,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         "知识库/wiki索引.md": resolve_template("wiki索引.md.tmpl"),
         "知识库/术语/术语索引.md": resolve_template("术语索引.md.tmpl"),
         "platform-ops/仪表盘.md": resolve_template("仪表盘.md.tmpl"),
-        "platform-ops/log.md": f"# 操作日志\n\n> append-only 操作记录。\n\n---\n\n## [{date}] install | Jarvis v1.0 安装\n",
+        "platform-ops/log.md": f"# 操作日志\n\n> append-only 操作记录。\n\n---\n\n## [{date}] install | Jarvis v{JARVIS_VERSION} 安装\n",
     }
     for rel_path, content in files.items():
         file_path = target / rel_path
@@ -94,7 +110,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     claude_path = target / "CLAUDE.md"
     jarvis_ref = (
         "\n\n---\n"
-        "## Jarvis 行为框架 (v1.0)\n\n"
+        f"## Jarvis 行为框架 (v{JARVIS_VERSION})\n\n"
         "本项目启用 Jarvis 行为框架。Core（铁律、写入裁决、Topic 生命周期等）由 SessionStart hook 自动注入。\n"
         "你的**角色和身份**由本文件定义，Jarvis 只约束你的工作方式。\n"
         "配置见 `jarvis.yaml`。\n"
@@ -172,7 +188,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
-    print(f"Jarvis v1.0 — doctor")
+    print(f"Jarvis v{JARVIS_VERSION} — doctor")
     print(f"  Target: {target}")
     print(f"  Jarvis: {jarvis_home}")
     print()
@@ -248,8 +264,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     if config.is_file():
         import subprocess
         try:
-            import jarvis.lib
-            be = jarvis_lib.load_jarvis_config(target).get("backend", "file")
+            from jarvis.lib import load_jarvis_config
+            be = load_jarvis_config(target).get("backend", "file")
             print(f"  [OK]   backend: {be}")
         except Exception:
             pass
@@ -275,8 +291,237 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_version(args: argparse.Namespace) -> int:
+    """Print Jarvis version."""
+    print(f"Jarvis v{JARVIS_VERSION}")
+    jarvis_home = find_jarvis_home()
+    print(f"  install: {jarvis_home}")
+    # Check git for latest
+    git_dir = jarvis_home.parent / ".git"
+    if git_dir.is_dir():
+        try:
+            result = subprocess.run(
+                ["git", "-C", str(jarvis_home.parent), "log", "--oneline", "-1"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode == 0:
+                print(f"  commit:  {result.stdout.strip()}")
+        except Exception:
+            pass
+    return 0
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    """Show Jarvis installation status for a project."""
+    target = Path(args.target or ".").resolve()
+    config = load_project_config(target)
+
+    if not config:
+        print(f"Jarvis not initialized in {target}")
+        print("Run 'jarvis init' first.")
+        return 1
+
+    print(f"Jarvis v{JARVIS_VERSION} — status")
+    print(f"  Project: {target}")
+    print()
+
+    # Version
+    proj_ver = config.get("jarvis_version", "unknown")
+    print(f"  Version:  {proj_ver}" + (" (current)" if proj_ver == JARVIS_VERSION else f" (latest: {JARVIS_VERSION})"))
+
+    # Plugins
+    plugins = config.get("plugins", [])
+    if isinstance(plugins, str):
+        plugins = [plugins]
+    print(f"  Plugins:  {', '.join(plugins) if plugins else '(none)'}")
+
+    # Backend
+    backend = config.get("backend", "file")
+    print(f"  Backend:  {backend}")
+
+    # Paths
+    paths = config.get("paths", {})
+    if isinstance(paths, dict) and paths:
+        print(f"  Paths:")
+        for k, v in paths.items():
+            exists = "✓" if (target / v).exists() else "✗"
+            print(f"    {k}: {v} {exists}")
+
+    # Skills count
+    skills_dir = target / ".claude" / "skills"
+    if skills_dir.is_dir():
+        skill_count = len([s for s in skills_dir.iterdir() if s.is_symlink() or s.is_dir()])
+        print(f"  Skills:   {skill_count} installed")
+
+    # Hooks
+    hooks_dir = target / ".claude" / "hooks"
+    if hooks_dir.is_dir():
+        hook_count = len([h for h in hooks_dir.iterdir() if h.suffix == ".sh"])
+        print(f"  Hooks:    {hook_count} installed")
+
+    return 0
+
+
+def cmd_upgrade(args: argparse.Namespace) -> int:
+    """Upgrade Jarvis to the latest version."""
+    jarvis_home = find_jarvis_home()
+    repo_root = jarvis_home.parent  # jarvis repo root (parent of package dir)
+
+    print(f"Jarvis v{JARVIS_VERSION} — upgrade")
+    print()
+
+    # Step 1: git pull
+    if (repo_root / ".git").is_dir():
+        print("[1/3] git pull...")
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "pull"],
+            capture_output=True, text=True, timeout=30,
+        )
+        print(f"  {result.stdout.strip() or 'Already up to date.'}")
+        if result.returncode != 0:
+            print(f"  [ERROR] {result.stderr.strip()}")
+            return 1
+    else:
+        print("[1/3] Not a git repo — skipping git pull")
+        if not args.force:
+            print("  Use --force to upgrade without git")
+            return 1
+
+    # Step 2: pipx upgrade or pip install
+    print("[2/3] Reinstalling package...")
+    # Try pipx first
+    try:
+        result = subprocess.run(
+            ["pipx", "upgrade", "jarvis-agent"],
+            capture_output=True, text=True, timeout=60,
+        )
+        if result.returncode == 0:
+            print(f"  {result.stdout.strip().split(chr(10))[-1] if result.stdout.strip() else 'upgraded'}")
+        else:
+            # Fallback: pipx install --force
+            result = subprocess.run(
+                ["pipx", "install", "--force", "-e", str(repo_root)],
+                capture_output=True, text=True, timeout=60,
+            )
+            if result.returncode == 0:
+                print("  reinstalled via pipx")
+            else:
+                raise RuntimeError(result.stderr)
+    except Exception:
+        # Fallback to pip
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "--break-system-packages", "-e", str(repo_root)],
+                capture_output=True, text=True, timeout=60,
+            )
+            if result.returncode != 0:
+                print(f"  [ERROR] pip install failed: {result.stderr.strip()}")
+                return 1
+            print("  reinstalled via pip")
+        except Exception as e:
+            print(f"  [ERROR] {e}")
+            return 1
+
+    # Step 3: doctor on target
+    print("[3/3] Running doctor...")
+    target = Path(args.target or ".").resolve()
+    return cmd_doctor(argparse.Namespace(target=str(target)))
+
+    return 0
+
+
+def cmd_uninstall(args: argparse.Namespace) -> int:
+    """Remove Jarvis from a project."""
+    target = Path(args.target or ".").resolve()
+    config = load_project_config(target)
+
+    if not config:
+        print(f"Jarvis is not initialized in {target}")
+        return 1
+
+    print(f"Jarvis v{JARVIS_VERSION} — uninstall")
+    print(f"  Target: {target}")
+    print()
+
+    if not args.yes:
+        answer = input("  This will remove Jarvis symlinks and configuration. Continue? [y/N]: ").strip().lower()
+        if answer != "y":
+            print("  Cancelled.")
+            return 0
+
+    removed = []
+    kept = []
+
+    # Remove skill symlinks
+    skills_dir = target / ".claude" / "skills"
+    if skills_dir.is_dir():
+        for item in list(skills_dir.iterdir()):
+            if item.is_symlink() and "jarvis" in str(item.resolve()):
+                item.unlink()
+                removed.append(f".claude/skills/{item.name}")
+
+    # Remove hook symlinks
+    hooks_dir = target / ".claude" / "hooks"
+    if hooks_dir.is_dir():
+        for item in list(hooks_dir.iterdir()):
+            if item.is_symlink() and "jarvis" in str(item.resolve()):
+                item.unlink()
+                removed.append(f".claude/hooks/{item.name}")
+
+    # Remove jarvis.yaml
+    config_path = target / "jarvis.yaml"
+    if config_path.is_file():
+        if args.keep_config:
+            kept.append("jarvis.yaml")
+        else:
+            config_path.unlink()
+            removed.append("jarvis.yaml")
+
+    # Remove CLAUDE.md jarvis reference (strip the appended block)
+    claude_path = target / "CLAUDE.md"
+    if claude_path.is_file() and not args.keep_claude:
+        content = claude_path.read_text(encoding="utf-8")
+        marker = "\n\n---\n## Jarvis 行为框架"
+        if marker in content:
+            new_content = content[:content.index(marker)]
+            claude_path.write_text(new_content, encoding="utf-8")
+            print(f"  [clean] CLAUDE.md (removed Jarvis reference)")
+        else:
+            kept.append("CLAUDE.md (no Jarvis reference found)")
+    elif claude_path.is_file():
+        kept.append("CLAUDE.md (--keep-claude)")
+
+    # Keep knowledge base and platform-ops by default (user data)
+    kb = target / "知识库"
+    ops = target / "platform-ops"
+    business = target / "业务"
+    for d, label in [(kb, "知识库/"), (ops, "platform-ops/"), (business, "业务/")]:
+        if d.is_dir() and not args.purge:
+            kept.append(f"{label} (user data, use --purge to remove)")
+
+    # Purge if requested
+    if args.purge:
+        for d in [kb, ops, business]:
+            if d.is_dir():
+                shutil.rmtree(d)
+                removed.append(f"{d.relative_to(target)}/")
+
+    print()
+    for r in removed:
+        print(f"  [removed] {r}")
+    for k in kept:
+        print(f"  [kept]   {k}")
+
+    print()
+    print("Done. Jarvis has been uninstalled from this project.")
+    if not args.purge:
+        print("Knowledge base and platform-ops were kept. Use --purge to remove everything.")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="jarvis", description="Jarvis CLI — LLM-native agent framework")
+    parser.add_argument("--version", "-V", action="store_true", help="Print version and exit")
     sub = parser.add_subparsers(dest="command", help="Commands")
 
     init_p = sub.add_parser("init", help="Initialize a new Jarvis project")
@@ -287,7 +532,29 @@ def main() -> int:
     doctor_p.add_argument("target", nargs="?", default=".", help="Project directory to check (default: current)")
     doctor_p.set_defaults(func=cmd_doctor)
 
+    status_p = sub.add_parser("status", help="Show Jarvis installation status")
+    status_p.add_argument("target", nargs="?", default=".", help="Project directory (default: current)")
+    status_p.set_defaults(func=cmd_status)
+
+    upgrade_p = sub.add_parser("upgrade", help="Upgrade Jarvis to the latest version")
+    upgrade_p.add_argument("target", nargs="?", default=".", help="Project to verify after upgrade (default: current)")
+    upgrade_p.add_argument("--force", action="store_true", help="Skip git pull check")
+    upgrade_p.set_defaults(func=cmd_upgrade)
+
+    uninstall_p = sub.add_parser("uninstall", help="Remove Jarvis from a project")
+    uninstall_p.add_argument("target", nargs="?", default=".", help="Project directory (default: current)")
+    uninstall_p.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
+    uninstall_p.add_argument("--purge", action="store_true", help="Also remove knowledge base and platform-ops")
+    uninstall_p.add_argument("--keep-config", action="store_true", help="Keep jarvis.yaml")
+    uninstall_p.add_argument("--keep-claude", action="store_true", help="Keep CLAUDE.md unchanged")
+    uninstall_p.set_defaults(func=cmd_uninstall)
+
+    version_p = sub.add_parser("version", help="Print Jarvis version")
+    version_p.set_defaults(func=cmd_version)
+
     args = parser.parse_args()
+    if args.version:
+        return cmd_version(args)
     if not args.command:
         parser.print_help()
         return 1
