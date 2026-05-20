@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-JARVIS_VERSION = "1.1.0"
+JARVIS_VERSION = "1.2.0"
 
 
 def now_date() -> str:
@@ -593,6 +593,29 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_bootstrap(args: argparse.Namespace) -> int:
+    """One-time setup: make /jarvis-init available in all Claude Code projects."""
+    jarvis_home = find_jarvis_home()
+    skill_src = jarvis_home / "skills" / "jarvis-init"
+    global_skills = Path.home() / ".claude" / "skills"
+    global_skills.mkdir(parents=True, exist_ok=True)
+    link = global_skills / "jarvis-init"
+
+    print(f"Jarvis v{JARVIS_VERSION} — bootstrap")
+    if not skill_src.is_dir():
+        print(f"  [ERROR] jarvis-init skill not found at {skill_src}")
+        return 1
+    if link.exists() and link.resolve() == skill_src.resolve():
+        print("  /jarvis-init already available in all projects.")
+        return 0
+    if link.exists():
+        link.unlink()
+    os.symlink(skill_src, link)
+    print("  /jarvis-init is now available in all Claude Code projects.")
+    print("  Try it: start Claude Code anywhere, type /jarvis-init")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="jarvis", description="Jarvis CLI — LLM-native agent framework")
     parser.add_argument("--version", "-V", action="store_true", help="Print version and exit")
@@ -612,7 +635,7 @@ def main() -> int:
 
     upgrade_p = sub.add_parser("upgrade", help="Upgrade Jarvis to the latest or specified version")
     upgrade_p.add_argument("target", nargs="?", default=".", help="Project to verify after upgrade (default: current)")
-    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.1.0). Default: latest")
+    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.2.0). Default: latest")
     upgrade_p.add_argument("--check", action="store_true", help="Check for available updates without installing")
     upgrade_p.add_argument("--force", action="store_true", help="Force reinstall even if already at target version")
     upgrade_p.set_defaults(func=cmd_upgrade)
@@ -624,6 +647,9 @@ def main() -> int:
     uninstall_p.add_argument("--keep-config", action="store_true", help="Keep jarvis.yaml")
     uninstall_p.add_argument("--keep-claude", action="store_true", help="Keep CLAUDE.md unchanged")
     uninstall_p.set_defaults(func=cmd_uninstall)
+
+    bootstrap_p = sub.add_parser("bootstrap", help="Install jarvis-init skill globally (one-time setup per machine)")
+    bootstrap_p.set_defaults(func=cmd_bootstrap)
 
     version_p = sub.add_parser("version", help="Print Jarvis version")
     version_p.set_defaults(func=cmd_version)
