@@ -125,6 +125,11 @@ try:
         for module_name, filename in plugin.get('provides', {}).items():
             module_path = os.path.join(plugin_dir, filename)
             if os.path.isfile(module_path):
+                # Security: prevent path traversal outside plugin directory
+                real_path = os.path.realpath(module_path)
+                real_plugin = os.path.realpath(plugin_dir)
+                if not real_path.startswith(real_plugin):
+                    continue
                 with open(module_path) as mf:
                     injections[module_name] = mf.read().strip()
 
@@ -186,6 +191,10 @@ if [ -f "$COMPACT_STATE" ]; then
 
     if [ "$age" -le 7200 ]; then
         STATE_CONTENT=$(cat "$COMPACT_STATE")
+        # Security: skip if state file looks corrupted or is not a Jarvis dump
+        if ! echo "$STATE_CONTENT" | head -3 | grep -q "Jarvis State Dump\|Active Topic\|Timestamp"; then
+            STATE_CONTENT=""
+        fi
         STATE_ESCAPED=$(escape_for_json "$STATE_CONTENT")
         context_parts="${context_parts}
 

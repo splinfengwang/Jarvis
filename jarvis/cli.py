@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-JARVIS_VERSION = "1.2.1"
+JARVIS_VERSION = "1.2.2"
 
 
 def now_date() -> str:
@@ -72,9 +72,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         for skill_path in sorted(skills_dir.iterdir()):
             if skill_path.is_dir():
                 link = target / ".claude" / "skills" / skill_path.name
-                if not link.exists():
-                    os.symlink(skill_path, link)
-                    print(f"  [link] .claude/skills/{skill_path.name}")
+                _safe_symlink(skill_path, link, f".claude/skills/{skill_path.name}")
 
     # Symlink hooks
     hooks_dir = jarvis_home / "hooks"
@@ -82,9 +80,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         for hook_path in sorted(hooks_dir.iterdir()):
             if hook_path.suffix == ".sh":
                 link = target / ".claude" / "hooks" / hook_path.name
-                if not link.exists():
-                    os.symlink(hook_path, link)
-                    print(f"  [link] .claude/hooks/{hook_path.name}")
+                _safe_symlink(hook_path, link, f".claude/hooks/{hook_path.name}")
 
     # Generate files from templates
     date = now_date()
@@ -103,9 +99,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         content = content.replace("{{DATE}}", date)
         content = content.replace("{{PROJECT_NAME}}", target.name)
         content = content.replace("{{JARVIS_VERSION}}", "1.0.0")
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content, encoding="utf-8")
-        print(f"  [file] {rel_path}")
+        _safe_write(file_path, content, rel_path)
 
     # Handle CLAUDE.md — interactive if already exists
     claude_path = target / "CLAUDE.md"
@@ -142,8 +136,7 @@ def cmd_init(args: argparse.Namespace) -> int:
                 print(f"  旧文件已备份为 CLAUDE.md.bak")
                 content = resolve_template("CLAUDE.md.tmpl")
                 content = content.replace("{{DATE}}", date).replace("{{PROJECT_NAME}}", target.name).replace("{{JARVIS_VERSION}}", "1.0.0")
-                claude_path.write_text(content, encoding="utf-8")
-                print(f"  [file] CLAUDE.md (新生成)")
+                _safe_write(claude_path, content, "CLAUDE.md")
             elif answer == "s":
                 print("  [skip] CLAUDE.md (保留原文件)")
             else:
@@ -152,8 +145,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     else:
         content = resolve_template("CLAUDE.md.tmpl")
         content = content.replace("{{DATE}}", date).replace("{{PROJECT_NAME}}", target.name).replace("{{JARVIS_VERSION}}", "1.0.0")
-        claude_path.write_text(content, encoding="utf-8")
-        print(f"  [file] CLAUDE.md")
+        _safe_write(claude_path, content, "CLAUDE.md")
 
     # Write jarvis.yaml
     config_path = target / "jarvis.yaml"
@@ -297,6 +289,41 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 def _get_repo_root() -> Path:
     return find_jarvis_home().parent
+
+
+def _safe_symlink(src: Path, dst: Path, label: str) -> bool:
+    """Create symlink with error handling. Returns True on success."""
+    try:
+        if not dst.exists():
+            os.symlink(src, dst)
+            print(f"  [link] {label}")
+            return True
+        elif dst.is_symlink() and dst.resolve() == src.resolve():
+            return True
+        else:
+            print(f"  [skip] {label} (exists)")
+            return True
+    except OSError as e:
+        print(f"  [ERROR] {label} — {e}")
+        return False
+
+
+def _safe_write(path: Path, content: str, label: str) -> bool:
+    """Write file with error handling. Returns True on success."""
+    if path.exists():
+        print(f"  [skip] {label}")
+        return True
+    if not content.strip():
+        print(f"  [WARN] {label} — empty content, skipping")
+        return False
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        print(f"  [file] {label}")
+        return True
+    except OSError as e:
+        print(f"  [ERROR] {label} — {e}")
+        return False
 
 
 def _get_all_tags() -> list[str]:
@@ -565,7 +592,13 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         content = claude_path.read_text(encoding="utf-8")
         marker = "\n\n---\n## Jarvis 行为框架"
         if marker in content:
-            new_content = content[:content.index(marker)]
+            start = content.index(marker)
+            end = content.find("\n---\n", start + 1)
+            if end == -1:
+                end = len(content)
+            else:
+                end = end + 5  # include the closing ---\n
+            new_content = content[:start] + content[end:]
             claude_path.write_text(new_content, encoding="utf-8")
             print(f"  [clean] CLAUDE.md (removed Jarvis reference)")
         else:
@@ -648,7 +681,7 @@ def main() -> int:
 
     upgrade_p = sub.add_parser("upgrade", help="Upgrade Jarvis to the latest or specified version")
     upgrade_p.add_argument("target", nargs="?", default=".", help="Project to verify after upgrade (default: current)")
-    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.2.1). Default: latest")
+    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.2.2). Default: latest")
     upgrade_p.add_argument("--check", action="store_true", help="Check for available updates without installing")
     upgrade_p.add_argument("--force", action="store_true", help="Force reinstall even if already at target version")
     upgrade_p.set_defaults(func=cmd_upgrade)

@@ -197,11 +197,12 @@ mkdir -p "$TARGET/知识库/术语"
 mkdir -p "$TARGET/业务"
 
 if [ ! -f "$TARGET/知识库/wiki索引.md" ]; then
-    cat > "$TARGET/知识库/wiki索引.md" << 'KB_EOF'
+    date=$date
+    cat > "$TARGET/知识库/wiki索引.md" << KB_EOF
 ---
 tags: [索引, wiki导航]
-created: $(date +%Y-%m-%d)
-last_updated: $(date +%Y-%m-%d)
+created: $date
+last_updated: $date
 ---
 
 # Wiki 索引
@@ -232,10 +233,10 @@ KB_EOF
 fi
 
 if [ ! -f "$TARGET/知识库/术语/术语索引.md" ]; then
-    cat > "$TARGET/知识库/术语/术语索引.md" << 'TI_EOF'
+    cat > "$TARGET/知识库/术语/术语索引.md" << TI_EOF
 ---
 tags: [索引, 术语]
-last_updated: $(date +%Y-%m-%d)
+last_updated: $date
 ---
 
 # 术语索引
@@ -255,13 +256,13 @@ echo "--- Initializing platform-ops ---"
 mkdir -p "$TARGET/platform-ops/topics"
 
 if [ ! -f "$TARGET/platform-ops/仪表盘.md" ]; then
-    cat > "$TARGET/platform-ops/仪表盘.md" << 'DB_EOF'
+    cat > "$TARGET/platform-ops/仪表盘.md" << DB_EOF
 ---
 tags:
   - 仪表盘
   - 启动入口
 assistant: Jarvis
-last_reviewed: $(date +%Y-%m-%d)
+last_reviewed: $date
 ---
 
 # 工作启动仪表盘（Jarvis）
@@ -311,14 +312,14 @@ DB_EOF
 fi
 
 if [ ! -f "$TARGET/platform-ops/log.md" ]; then
-    cat > "$TARGET/platform-ops/log.md" << 'LOG_EOF'
+    cat > "$TARGET/platform-ops/log.md" << LOG_EOF
 # 操作日志
 
 > append-only 操作记录。格式：`## [YYYY-MM-DD] 操作类型 | 简述`
 
 ---
 
-## [$(date +%Y-%m-%d)] install | Jarvis v1.0.0 安装
+## [$date] install | Jarvis v1.0.0 安装
 LOG_EOF
     echo "  [ok]   platform-ops/log.md"
 fi
