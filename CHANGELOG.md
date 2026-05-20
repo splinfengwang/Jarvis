@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.2.1 (2026-05-20)
+
+### 修复
+- **bootstrap broken symlink 崩溃**：`Path.unlink(missing_ok=True)` + `is_symlink()` 检查
+- **bootstrap 非 symlink 保护**：拒绝覆盖用户文件（`--force` 可强制）
+- **upgrade 静默降级检测**：目标版本比当前旧时 warn + 需 `--force`
+- **`--claude-mode`**：`jarvis init --claude-mode a|s|r`，agent 驱动的 init 不再被 `input()` 阻塞
+- **`load_project_config` 异常不再静默**：写入 stderr
+- **DRY**：`_get_latest_tag` / `_get_available_versions` 合并
+
+## v1.2.0 (2026-05-20)
+
+### 新增
+- **jarvis bootstrap**：一次性全局安装 `/jarvis-init`，之后任何项目直接可用
+
 ## v1.1.0 (2026-05-20)
 
 ### 新增

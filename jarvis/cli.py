@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-JARVIS_VERSION = "1.2.0"
+JARVIS_VERSION = "1.2.1"
 
 
 def now_date() -> str:
@@ -39,7 +39,8 @@ def load_project_config(project_root: Path) -> dict | None:
     try:
         from jarvis.lib import load_jarvis_config
         return load_jarvis_config(project_root)
-    except Exception:
+    except Exception as e:
+        print(f"  [WARN] Failed to load jarvis config: {e}", file=sys.stderr)
         return None
 
 
@@ -129,8 +130,12 @@ def cmd_init(args: argparse.Namespace) -> int:
         if "jarvis" in existing.lower() and "behavior" in existing.lower():
             print("  [skip] CLAUDE.md (已有 Jarvis 引用)")
         else:
-            # Interactive: ask what to do
-            answer = input("  如何处理? [A]追加引用 / [S]跳过 / [R]替换(备份旧文件) (默认=A): ").strip().lower()
+            # Interactive or scripted (--claude-mode for agent-driven init)
+            if args.claude_mode:
+                answer = args.claude_mode.strip().lower()
+                print(f"  Claude mode: {answer}")
+            else:
+                answer = input("  如何处理? [A]追加引用 / [S]跳过 / [R]替换(备份旧文件) (默认=A): ").strip().lower()
             if answer == "r":
                 backup = target / "CLAUDE.md.bak"
                 claude_path.rename(backup)
@@ -262,7 +267,6 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
     # Check backend availability
     if config.is_file():
-        import subprocess
         try:
             from jarvis.lib import load_jarvis_config
             be = load_jarvis_config(target).get("backend", "file")
@@ -295,26 +299,8 @@ def _get_repo_root() -> Path:
     return find_jarvis_home().parent
 
 
-def _get_latest_tag() -> str | None:
-    """Get the latest git tag (sorted by version)."""
-    repo = _get_repo_root()
-    if not (repo / ".git").is_dir():
-        return None
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo), "tag", "--sort=-v:refname"],
-            capture_output=True, text=True, timeout=5,
-        )
-        if result.returncode == 0:
-            tags = [t.strip() for t in result.stdout.strip().split("\n") if t.strip().startswith("v")]
-            return tags[0] if tags else None
-    except Exception:
-        pass
-    return None
-
-
-def _get_available_versions() -> list[str]:
-    """List all version tags, newest first."""
+def _get_all_tags() -> list[str]:
+    """List all version tags, newest first. Returns empty list on failure."""
     repo = _get_repo_root()
     if not (repo / ".git").is_dir():
         return []
@@ -328,6 +314,16 @@ def _get_available_versions() -> list[str]:
     except Exception:
         pass
     return []
+
+
+def _get_latest_tag() -> str | None:
+    """Get the latest git tag."""
+    tags = _get_all_tags()
+    return tags[0] if tags else None
+
+
+def _get_available_versions() -> list[str]:
+    return _get_all_tags()
 
 
 def cmd_version(args: argparse.Namespace) -> int:
@@ -396,7 +392,6 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 def cmd_upgrade(args: argparse.Namespace) -> int:
     """Upgrade Jarvis to a specific or latest version."""
-    jarvis_home = find_jarvis_home()
     repo_root = _get_repo_root()
     current_tag = f"v{JARVIS_VERSION}"
     latest_tag = _get_latest_tag()
@@ -430,6 +425,19 @@ def cmd_upgrade(args: argparse.Namespace) -> int:
     if target_version and target_version == current_tag and not args.force:
         print(f"  Already at {target_version}. Use --force to reinstall.")
         return 0
+
+    # Warn if downgrade
+    if target_version and latest_tag:
+        try:
+            def _tag_to_tuple(t):
+                return tuple(int(x) for x in t.lstrip("v").split("."))
+            if _tag_to_tuple(target_version) < _tag_to_tuple(current_tag):
+                print(f"  [WARN] Target {target_version} is older than current {current_tag}.")
+                if not args.force:
+                    print("  Use --force to confirm downgrade.")
+                    return 1
+        except (ValueError, AttributeError):
+            pass
 
     print(f"  Target:   {target_version or 'latest commit'}")
 
@@ -605,11 +613,15 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
     if not skill_src.is_dir():
         print(f"  [ERROR] jarvis-init skill not found at {skill_src}")
         return 1
-    if link.exists() and link.resolve() == skill_src.resolve():
+    if link.is_symlink() and link.resolve() == skill_src.resolve():
         print("  /jarvis-init already available in all projects.")
         return 0
-    if link.exists():
-        link.unlink()
+    if link.is_symlink() or link.exists():
+        if not link.is_symlink():
+            print(f"  [ERROR] {link} exists and is not a Jarvis symlink. Remove it first or use --force.")
+            if not getattr(args, 'force', False):
+                return 1
+        link.unlink(missing_ok=True)
     os.symlink(skill_src, link)
     print("  /jarvis-init is now available in all Claude Code projects.")
     print("  Try it: start Claude Code anywhere, type /jarvis-init")
@@ -623,6 +635,7 @@ def main() -> int:
 
     init_p = sub.add_parser("init", help="Initialize a new Jarvis project")
     init_p.add_argument("target", nargs="?", default=".", help="Target project directory (default: current)")
+    init_p.add_argument("--claude-mode", choices=["a", "s", "r"], help="Scripted mode: append(a)/skip(s)/replace(r) — for agent-initiated init")
     init_p.set_defaults(func=cmd_init)
 
     doctor_p = sub.add_parser("doctor", help="Verify Jarvis installation")
@@ -635,7 +648,7 @@ def main() -> int:
 
     upgrade_p = sub.add_parser("upgrade", help="Upgrade Jarvis to the latest or specified version")
     upgrade_p.add_argument("target", nargs="?", default=".", help="Project to verify after upgrade (default: current)")
-    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.2.0). Default: latest")
+    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.2.1). Default: latest")
     upgrade_p.add_argument("--check", action="store_true", help="Check for available updates without installing")
     upgrade_p.add_argument("--force", action="store_true", help="Force reinstall even if already at target version")
     upgrade_p.set_defaults(func=cmd_upgrade)
@@ -649,6 +662,7 @@ def main() -> int:
     uninstall_p.set_defaults(func=cmd_uninstall)
 
     bootstrap_p = sub.add_parser("bootstrap", help="Install jarvis-init skill globally (one-time setup per machine)")
+    bootstrap_p.add_argument("--force", action="store_true", help="Force overwrite even if non-symlink exists")
     bootstrap_p.set_defaults(func=cmd_bootstrap)
 
     version_p = sub.add_parser("version", help="Print Jarvis version")
