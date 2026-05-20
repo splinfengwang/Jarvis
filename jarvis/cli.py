@@ -291,23 +291,55 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
+def _get_repo_root() -> Path:
+    return find_jarvis_home().parent
+
+
+def _get_latest_tag() -> str | None:
+    """Get the latest git tag (sorted by version)."""
+    repo = _get_repo_root()
+    if not (repo / ".git").is_dir():
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "tag", "--sort=-v:refname"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            tags = [t.strip() for t in result.stdout.strip().split("\n") if t.strip().startswith("v")]
+            return tags[0] if tags else None
+    except Exception:
+        pass
+    return None
+
+
+def _get_available_versions() -> list[str]:
+    """List all version tags, newest first."""
+    repo = _get_repo_root()
+    if not (repo / ".git").is_dir():
+        return []
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "tag", "--sort=-v:refname"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            return [t.strip() for t in result.stdout.strip().split("\n") if t.strip().startswith("v")]
+    except Exception:
+        pass
+    return []
+
+
 def cmd_version(args: argparse.Namespace) -> int:
     """Print Jarvis version."""
     print(f"Jarvis v{JARVIS_VERSION}")
     jarvis_home = find_jarvis_home()
     print(f"  install: {jarvis_home}")
-    # Check git for latest
-    git_dir = jarvis_home.parent / ".git"
-    if git_dir.is_dir():
-        try:
-            result = subprocess.run(
-                ["git", "-C", str(jarvis_home.parent), "log", "--oneline", "-1"],
-                capture_output=True, text=True, timeout=5,
-            )
-            if result.returncode == 0:
-                print(f"  commit:  {result.stdout.strip()}")
-        except Exception:
-            pass
+    latest = _get_latest_tag()
+    if latest:
+        current_tag = f"v{JARVIS_VERSION}"
+        status = " (current)" if latest == current_tag else f" (available: {latest})"
+        print(f"  latest:  {latest}{status}")
     return 0
 
 
@@ -363,71 +395,113 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_upgrade(args: argparse.Namespace) -> int:
-    """Upgrade Jarvis to the latest version."""
+    """Upgrade Jarvis to a specific or latest version."""
     jarvis_home = find_jarvis_home()
-    repo_root = jarvis_home.parent  # jarvis repo root (parent of package dir)
+    repo_root = _get_repo_root()
+    current_tag = f"v{JARVIS_VERSION}"
+    latest_tag = _get_latest_tag()
+    available = _get_available_versions()
 
     print(f"Jarvis v{JARVIS_VERSION} — upgrade")
-    print()
+    print(f"  Current:  {current_tag}")
 
-    # Step 1: git pull
-    if (repo_root / ".git").is_dir():
-        print("[1/3] git pull...")
-        result = subprocess.run(
-            ["git", "-C", str(repo_root), "pull"],
-            capture_output=True, text=True, timeout=30,
-        )
-        print(f"  {result.stdout.strip() or 'Already up to date.'}")
-        if result.returncode != 0:
-            print(f"  [ERROR] {result.stderr.strip()}")
-            return 1
-    else:
-        print("[1/3] Not a git repo — skipping git pull")
-        if not args.force:
-            print("  Use --force to upgrade without git")
+    # --check mode: just report, don't install
+    if args.check:
+        if latest_tag and latest_tag != current_tag:
+            print(f"  Latest:   {latest_tag} (behind — run 'jarvis upgrade' to update)")
+        elif latest_tag:
+            print(f"  Latest:   {latest_tag} (up to date)")
+        else:
+            print(f"  No version tags found. Use git pull manually.")
+        if available:
+            print(f"  Versions: {', '.join(available[:10])}")
+        return 0
+
+    # Determine target version
+    target_version = args.version or (latest_tag if latest_tag else None)
+    if not target_version:
+        print("  No version tags found and no --version specified.")
+        if args.force:
+            print("  Forcing git pull + reinstall...")
+        else:
+            print("  Use --force to upgrade without version tags, or tag a release first.")
             return 1
 
-    # Step 2: pipx upgrade or pip install
+    if target_version and target_version == current_tag and not args.force:
+        print(f"  Already at {target_version}. Use --force to reinstall.")
+        return 0
+
+    print(f"  Target:   {target_version or 'latest commit'}")
+
+    if not (repo_root / ".git").is_dir():
+        print("  [ERROR] Not a git repo — can't upgrade")
+        return 1
+
+    # Step 1: git fetch + checkout target version
+    print(f"\n[1/3] git fetch + checkout {target_version or 'HEAD'}...")
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "fetch", "--tags"],
+        capture_output=True, text=True, timeout=30,
+    )
+    if result.returncode != 0:
+        print(f"  [ERROR] git fetch failed: {result.stderr.strip()}")
+        return 1
+
+    checkout_target = target_version or "origin/master"
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "checkout", checkout_target],
+        capture_output=True, text=True, timeout=10,
+    )
+    if result.returncode != 0:
+        print(f"  [ERROR] git checkout failed: {result.stderr.strip()}")
+        return 1
+    print(f"  {result.stdout.strip() or 'checked out'}")
+
+    # Step 2: reinstall
     print("[2/3] Reinstalling package...")
-    # Try pipx first
+    installed = False
     try:
         result = subprocess.run(
             ["pipx", "upgrade", "jarvis-agent"],
             capture_output=True, text=True, timeout=60,
         )
         if result.returncode == 0:
-            print(f"  {result.stdout.strip().split(chr(10))[-1] if result.stdout.strip() else 'upgraded'}")
+            print(f"  pipx upgrade ok")
+            installed = True
         else:
-            # Fallback: pipx install --force
             result = subprocess.run(
                 ["pipx", "install", "--force", "-e", str(repo_root)],
                 capture_output=True, text=True, timeout=60,
             )
             if result.returncode == 0:
-                print("  reinstalled via pipx")
+                print("  pipx install --force ok")
+                installed = True
             else:
                 raise RuntimeError(result.stderr)
     except Exception:
-        # Fallback to pip
         try:
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "install", "--break-system-packages", "-e", str(repo_root)],
                 capture_output=True, text=True, timeout=60,
             )
-            if result.returncode != 0:
-                print(f"  [ERROR] pip install failed: {result.stderr.strip()}")
+            if result.returncode == 0:
+                print("  pip install ok")
+                installed = True
+            else:
+                print(f"  [ERROR] {result.stderr.strip()}")
                 return 1
-            print("  reinstalled via pip")
         except Exception as e:
             print(f"  [ERROR] {e}")
             return 1
 
-    # Step 3: doctor on target
+    if not installed:
+        print("  [ERROR] Package reinstall failed")
+        return 1
+
+    # Step 3: doctor
     print("[3/3] Running doctor...")
     target = Path(args.target or ".").resolve()
     return cmd_doctor(argparse.Namespace(target=str(target)))
-
-    return 0
 
 
 def cmd_uninstall(args: argparse.Namespace) -> int:
@@ -536,9 +610,11 @@ def main() -> int:
     status_p.add_argument("target", nargs="?", default=".", help="Project directory (default: current)")
     status_p.set_defaults(func=cmd_status)
 
-    upgrade_p = sub.add_parser("upgrade", help="Upgrade Jarvis to the latest version")
+    upgrade_p = sub.add_parser("upgrade", help="Upgrade Jarvis to the latest or specified version")
     upgrade_p.add_argument("target", nargs="?", default=".", help="Project to verify after upgrade (default: current)")
-    upgrade_p.add_argument("--force", action="store_true", help="Skip git pull check")
+    upgrade_p.add_argument("--version", "-v", help="Upgrade to a specific version tag (e.g. v1.1.0)")
+    upgrade_p.add_argument("--check", action="store_true", help="Check for available updates without installing")
+    upgrade_p.add_argument("--force", action="store_true", help="Force reinstall even if already at target version")
     upgrade_p.set_defaults(func=cmd_upgrade)
 
     uninstall_p = sub.add_parser("uninstall", help="Remove Jarvis from a project")
