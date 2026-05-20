@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-JARVIS_VERSION = "1.0.0"
+JARVIS_VERSION = "1.1.0"
 
 
 def now_date() -> str:
@@ -418,9 +418,9 @@ def cmd_upgrade(args: argparse.Namespace) -> int:
         return 0
 
     # Determine target version
-    target_version = args.version or (latest_tag if latest_tag else None)
+    target_version = args.tag or (latest_tag if latest_tag else None)
     if not target_version:
-        print("  No version tags found and no --version specified.")
+        print("  No version tags found and no --tag specified.")
         if args.force:
             print("  Forcing git pull + reinstall...")
         else:
@@ -612,7 +612,7 @@ def main() -> int:
 
     upgrade_p = sub.add_parser("upgrade", help="Upgrade Jarvis to the latest or specified version")
     upgrade_p.add_argument("target", nargs="?", default=".", help="Project to verify after upgrade (default: current)")
-    upgrade_p.add_argument("--version", "-v", help="Upgrade to a specific version tag (e.g. v1.1.0)")
+    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.1.0). Default: latest")
     upgrade_p.add_argument("--check", action="store_true", help="Check for available updates without installing")
     upgrade_p.add_argument("--force", action="store_true", help="Force reinstall even if already at target version")
     upgrade_p.set_defaults(func=cmd_upgrade)
@@ -629,7 +629,7 @@ def main() -> int:
     version_p.set_defaults(func=cmd_version)
 
     args = parser.parse_args()
-    if args.version:
+    if getattr(args, 'version', False):
         return cmd_version(args)
     if not args.command:
         parser.print_help()
