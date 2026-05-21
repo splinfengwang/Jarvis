@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="jarvis-agent",
-    version="1.4.0",
+    version="1.4.1",
     description="Jarvis — An LLM-native agent framework for long-term work assistance.",
     author="Lin Feng",
     license="MIT",

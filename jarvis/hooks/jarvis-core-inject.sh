@@ -31,6 +31,7 @@ if [ -f "$CORE_PATH" ]; then
     if [ -f "$JARVIS_YAML" ] && command -v python3 &>/dev/null; then
         CORE_CONTENT=$(python3 - "$JARVIS_YAML" "$CORE_CONTENT" "$JARVIS_HOME" << 'PYEOF'
 import sys, os, re
+from datetime import datetime
 
 jarvis_yaml_path = sys.argv[1]
 core_content = sys.argv[2]
@@ -167,11 +168,41 @@ try:
         topics_dir = os.path.join(project_root, paths.get('topics', 'platform-ops/topics'))
 
         snapshot_lines = ["[JARVIS_KNOWLEDGE_SNAPSHOT]"]
-        snapshot_lines.append("以下是你已确认的知识基线。状态为\"已确认\"的条目可直接作为推理基础。状态为\"待确认\"的需标注后引用。")
+        snapshot_lines.append("以下是你已确认的知识基线。")
+        snapshot_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+        snapshot_lines.append(f"快照时间: {snapshot_time}")
+        snapshot_lines.append("快照内容已从源文件提取，可直接作为推理基础。但若源文件最后修改时间晚于快照时间，以源文件为准。")
+        snapshot_lines.append("会话中新确认的知识不受此快照限制。")
         snapshot_lines.append("")
         total_chars = len("".join(snapshot_lines))
 
-        # ── Source 1: Confirmed terms (top 8 by mtime) ──
+        # ── Source 0: Collect topic names first (needed by term sorting) ──
+        topic_names = []
+        if os.path.isfile(dashboard_path):
+            try:
+                with open(dashboard_path, encoding='utf-8') as f:
+                    dash = f.read()
+                in_active = False
+                for line in dash.splitlines():
+                    if line.strip() == '## 活跃 Topic':
+                        in_active = True
+                        continue
+                    if in_active and line.startswith('## '):
+                        break
+                    if in_active and line.strip().startswith('|') and '|' in line[1:]:
+                        cells = [c.strip() for c in line.split('|')[1:-1]]
+                        if len(cells) >= 4 and ('[[' in cells[1] or '[' in cells[1]):
+                            status = cells[0]
+                            match = re.search(r'\[\[.*?\|(.*?)\]\]', cells[1])
+                            if not match:
+                                match = re.search(r'\[\[(.*?)\]\]', cells[1])
+                            topic_name = match.group(1) if match else cells[1].replace('[[', '').replace(']]', '').split('|')[-1]
+                            next_step = cells[3] if len(cells) > 3 else ''
+                            topic_names.append((status, topic_name, next_step))
+            except Exception:
+                pass
+
+        # ── Source 1: Confirmed terms (sorted by topic relevance, then mtime) ──
         term_entries = []
         if os.path.isdir(terms_dir):
             for fname in os.listdir(terms_dir):
@@ -211,7 +242,24 @@ try:
                     pass
 
         if term_entries:
-            term_entries.sort(key=lambda x: -x[1])  # newest first
+            # T4: Sort by topic relevance (Doing first), then by mtime
+            doing_names = [name for status, name, _ in topic_names if 'Doing' in status] if topic_names else []
+            def term_score(entry):
+                fpath, mtime, title, summary = entry
+                relevance = 0
+                if doing_names:
+                    try:
+                        # Check if term frontmatter references any doing topic
+                        with open(fpath, encoding='utf-8') as f:
+                            raw = f.read()
+                        for dname in doing_names:
+                            if dname in raw:
+                                relevance = 1
+                                break
+                    except Exception:
+                        pass
+                return (-relevance, -mtime)  # relevant first, then newest
+            term_entries.sort(key=term_score)
             term_lines = ["## 已确认术语（最近 8 条）"]
             for _, _, title, summary in term_entries[:8]:
                 entry = f"- **{title}**"
@@ -225,58 +273,81 @@ try:
             snapshot_lines.append("（知识库暂无已确认术语）")
             snapshot_lines.append("")
 
-        # ── Source 2: Wiki index confirmed entries ──
+        # ── Source 2: Wiki index structured overview ──
         wiki_path = os.path.join(project_root, paths.get('wiki_index', '知识库/wiki索引.md'))
         if os.path.isfile(wiki_path):
             try:
                 with open(wiki_path, encoding='utf-8') as f:
                     wiki = f.read()
-                # Extract confirmed rows from tables
-                confirmed_rows = []
+                # Parse sections: terms, analysis docs, decisions
+                sections = {"术语": {"total": 0, "confirmed": 0, "entries": []},
+                           "分析文档": {"total": 0, "confirmed": 0, "entries": []},
+                           "决策记录": {"total": 0, "confirmed": 0, "entries": []}}
+                current_section = None
+                in_table = False
                 for line in wiki.splitlines():
-                    if line.strip().startswith('|') and '已确认' in line:
-                        cells = [c.strip() for c in line.split('|')[1:-1]]
-                        confirmed_rows.append(cells)
-                if confirmed_rows:
-                    wiki_lines = ["## 知识库已确认条目 (来自wiki索引)"]
-                    for row in confirmed_rows[:12]:
-                        entry = f"- {row[0]}" if row else ""
-                        if len(row) > 1 and row[1]:
-                            entry += f" — {row[1]}"
-                        wiki_lines.append(entry)
+                    stripped = line.strip()
+                    if stripped.startswith('## '):
+                        name = stripped[3:].strip()
+                        if '术语' in name: current_section = "术语"
+                        elif '分析文' in name or '业务文档' in name: current_section = "分析文档"
+                        elif '决策' in name: current_section = "决策记录"
+                        else: current_section = None
+                        in_table = False
+                        continue
+                    if stripped.startswith('|') and not stripped.startswith('|---') and current_section:
+                        in_table = True
+                        cells = [c.strip() for c in stripped.split('|')[1:-1]]
+                        if len(cells) >= 3:
+                            is_confirmed = '已确认' in cells[-1]
+                            sec = sections[current_section]
+                            sec["total"] += 1
+                            if is_confirmed:
+                                sec["confirmed"] += 1
+                            # Extract title from wikilink: [[path|title]] -> title
+                            title = cells[0]
+                            match = re.search(r'\[\[.*?\|?(.*?)\]\]', cells[0])
+                            if match: title = match.group(1)
+                            summary = cells[1] if len(cells) > 1 else ''
+                            sec["entries"].append((title, summary, is_confirmed))
+                # Build overview
+                overview = ["## 知识库概览"]
+                total_confirmed = 0
+                for sec_name in ["术语", "分析文档", "决策记录"]:
+                    sec = sections[sec_name]
+                    if sec["total"] > 0:
+                        overview.append(f"{sec_name}: {sec['total']} 条 ({sec['confirmed']} 已确认)")
+                        total_confirmed += sec["confirmed"]
+                    else:
+                        overview.append(f"{sec_name}: （无）")
+                overview.append("")
+
+                # Build key entries (confirmed only, top 8 total)
+                confirmed_entries = []
+                for sec_name in ["术语", "分析文档", "决策记录"]:
+                    for title, summary, is_confirmed in sections[sec_name]["entries"]:
+                        if is_confirmed:
+                            confirmed_entries.append((sec_name, title, summary[:120] if summary else ''))
+                if confirmed_entries:
+                    key_lines = [f"## 关键条目 (共 {total_confirmed} 条已确认)"]
+                    for sec_name, title, summary in confirmed_entries[:8]:
+                        entry = f"- [{sec_name}] {title}"
+                        if summary: entry += f" — {summary}"
+                        key_lines.append(entry)
                         total_chars += len(entry) + 1
-                    snapshot_lines.extend(wiki_lines)
+                    if len(confirmed_entries) > 8:
+                        key_lines.append(f"（还有 {len(confirmed_entries)-8} 条未展示）")
+                    snapshot_lines.extend(overview)
+                    snapshot_lines.extend(key_lines)
+                    snapshot_lines.append("")
+                else:
+                    snapshot_lines.extend(overview)
+                    snapshot_lines.append("（暂无已确认条目）")
                     snapshot_lines.append("")
             except Exception:
                 pass
 
         # ── Source 3: Active topics from dashboard ──
-        topic_names = []
-        if os.path.isfile(dashboard_path):
-            try:
-                with open(dashboard_path, encoding='utf-8') as f:
-                    dash = f.read()
-                in_active = False
-                for line in dash.splitlines():
-                    if line.strip() == '## 活跃 Topic':
-                        in_active = True
-                        continue
-                    if in_active and line.startswith('## '):
-                        break
-                    if in_active and line.strip().startswith('|') and '|' in line[1:]:
-                        cells = [c.strip() for c in line.split('|')[1:-1]]
-                        if len(cells) >= 4 and '[[' in cells[1]:
-                            status = cells[0]
-                            # Extract topic name from wikilink
-                            match = re.search(r'\[\[(?:.*?/)?(?:索引)?\.?md?\|(.*?)\]\]', cells[1])
-                            if not match:
-                                match = re.search(r'\[\[(.*?)\]\]', cells[1])
-                            topic_name = match.group(1) if match else cells[1]
-                            next_step = cells[3] if len(cells) > 3 else ''
-                            topic_names.append((status, topic_name, next_step))
-            except Exception:
-                pass
-
         if topic_names:
             topic_lines = ["## 活跃工作主题"]
             for status, name, next_step in topic_names[:5]:
@@ -293,8 +364,9 @@ try:
 
         # ── Source 3: Key facts from topic snapshots ──
         fact_lines = []
-        for _, topic_name, _ in topic_names[:5]:
-            # Try to find the topic snapshot
+        for status, topic_name, _ in topic_names[:5]:
+            # T3/A4: State-based filtering
+            snapshot_age_days = None
             found = False
             if os.path.isdir(topics_dir):
                 for dname in sorted(os.listdir(topics_dir), reverse=True):
@@ -307,23 +379,45 @@ try:
                             content = f.read()
                         if topic_name not in content[:200]:
                             continue
-                        # Extract "已确认事实" section
-                        in_facts = False
-                        facts = []
-                        for line in content.splitlines():
-                            if line.startswith('## ') and '已确认事实' in line:
-                                in_facts = True
-                                continue
-                            if in_facts and line.startswith('## '):
-                                break
-                            if in_facts and line.strip().startswith('- '):
-                                fact = line.strip()[2:][:150]
-                                if fact and fact not in ('暂无。', '-'):
-                                    facts.append(fact)
-                        if facts:
-                            summary = '; '.join(facts[:3])
-                            fact_lines.append(f"- {topic_name}: {summary}")
-                            found = True
+                        # Extract snapshot time
+                        snapshot_age_days = None
+                        time_match = re.search(r'快照时间\*?\*?:\s*(\d{4}-\d{2}-\d{2})', content)
+                        if time_match:
+                            try:
+                                snap_date = datetime.strptime(time_match.group(1), "%Y-%m-%d")
+                                snapshot_age_days = (datetime.now() - snap_date).days
+                            except Exception:
+                                pass
+                        # State-based display
+                        is_doing = 'Doing' in status
+                        is_paused = 'Paused' in status or 'paused' in status.lower()
+                        if is_doing:
+                            # Show topic + up to 3 confirmed facts
+                            in_facts = False
+                            facts = []
+                            for line in content.splitlines():
+                                if line.startswith('## ') and '已确认事实' in line:
+                                    in_facts = True
+                                    continue
+                                if in_facts and line.startswith('## '):
+                                    break
+                                if in_facts and line.strip().startswith('- '):
+                                    fact = line.strip()[2:][:150]
+                                    if fact and fact not in ('暂无。', '-'):
+                                        facts.append(fact)
+# Update the display logic after extracting snapshot for this topic
+                        if is_doing:
+                            # Show facts
+                            if facts:
+                                summary = '; '.join(facts[:3])
+                                fact_lines.append(f"- {topic_name}: {summary}")
+                        elif is_paused and snapshot_age_days is not None and snapshot_age_days <= 30:
+                            fact_lines.append(f"- {topic_name} [{status}] — 最近活跃")
+                        elif is_paused:
+                            fact_lines.append(f"- {topic_name} ({status}, {snapshot_age_days}d未更新)" if snapshot_age_days else f"- {topic_name} ({status})")
+                        else:
+                            fact_lines.append(f"- {topic_name} ({status})")
+                        found = True
                         break
                     except Exception:
                         pass
@@ -339,13 +433,13 @@ try:
                     fact_lines.pop()
                 if fact_lines:
                     fact_lines.append("...（已截断，完整列表可搜索知识库）")
-            snapshot_lines.extend(fact_section if fact_section == (["## 关键结论"] + fact_lines[:8]) else (["## 关键结论"] + fact_lines))
+            snapshot_lines.extend(["## 关键结论"] + fact_lines[:8])
             snapshot_lines.append("")
 
         snapshot_lines.append("[/JARVIS_KNOWLEDGE_SNAPSHOT]")
         core_content = core_content + "\n" + "\n".join(snapshot_lines)
-    except Exception:
-        pass  # Never block Core injection for snapshot failure
+    except Exception as e:
+        import sys as _sys; print(f"[JARVIS WARN] Knowledge snapshot failed: {e}", file=_sys.stderr)
 
 except Exception:
     # On any error, just remove unmatched placeholders
