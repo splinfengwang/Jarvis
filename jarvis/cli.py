@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-JARVIS_VERSION = "1.3.0"
+JARVIS_VERSION = "1.4.0"
 
 
 def now_date() -> str:
@@ -681,7 +681,7 @@ def main() -> int:
 
     upgrade_p = sub.add_parser("upgrade", help="Upgrade Jarvis to the latest or specified version")
     upgrade_p.add_argument("target", nargs="?", default=".", help="Project to verify after upgrade (default: current)")
-    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.3.0). Default: latest")
+    upgrade_p.add_argument("--tag", help="Upgrade to a specific version tag (e.g. v1.4.0). Default: latest")
     upgrade_p.add_argument("--check", action="store_true", help="Check for available updates without installing")
     upgrade_p.add_argument("--force", action="store_true", help="Force reinstall even if already at target version")
     upgrade_p.set_defaults(func=cmd_upgrade)
