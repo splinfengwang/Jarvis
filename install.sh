@@ -197,7 +197,7 @@ mkdir -p "$TARGET/知识库/术语"
 mkdir -p "$TARGET/业务"
 
 if [ ! -f "$TARGET/知识库/wiki索引.md" ]; then
-    date=$date
+    date=$(date +%Y-%m-%d)
     cat > "$TARGET/知识库/wiki索引.md" << KB_EOF
 ---
 tags: [索引, wiki导航]

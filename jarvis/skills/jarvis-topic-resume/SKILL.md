@@ -25,9 +25,11 @@ outputs:
 - 已确认事实、当前推论、待拍板。
 - 下一步建议。
 
-required_references:
-- `智能体/贾维斯/runtime-v0.1/references/context-pack-spec.md`
-- `智能体/贾维斯/runtime-v0.1/references/topic-lifecycle.md`
+required_references: []
+
+on_demand_references:
+- `jarvis/references/context-pack-spec.md`
+- `jarvis/references/topic-lifecycle.md`
 
 allowed_scripts:
 - none

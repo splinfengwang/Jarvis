@@ -30,21 +30,21 @@ outputs:
 - validation result。
 
 required_references:
-- `智能体/贾维斯/runtime-v0.1/references/topic-lifecycle.md`
-- `智能体/贾维斯/runtime-v0.1/references/session-locating.md`
+- `jarvis/references/session-locating.md`
 
 on_demand_references:
-- `智能体/贾维斯/runtime-v0.1/research-cards/ByteRover.md`
+- `jarvis/references/topic-lifecycle.md`
+- `jarvis/research-cards/ByteRover.md`
 - 仅在解释 pending extraction 设计来源、生命周期失败或修改 Topic 关闭协议时读取。
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/locate_session_jsonl.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/update_snapshot.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/update_topic_status.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/sync_topic_index.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/append_operation_log.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/validate_dashboard.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/memcommit_adapter.py`
+- `jarvis/scripts/locate_session_jsonl.py`
+- `jarvis/scripts/update_snapshot.py`
+- `jarvis/scripts/update_topic_status.py`
+- `jarvis/scripts/sync_topic_index.py`
+- `jarvis/scripts/append_operation_log.py`
+- `jarvis/scripts/validate_dashboard.py`
+- `jarvis/scripts/memcommit_adapter.py`
 
 write_level:
 - record_write

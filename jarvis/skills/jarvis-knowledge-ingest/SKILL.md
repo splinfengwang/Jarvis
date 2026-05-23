@@ -28,15 +28,17 @@ outputs:
 - 索引和日志更新结果。
 
 required_references:
-- `智能体/贾维斯/runtime-v0.1/references/evidence-pack-spec.md`
-- `智能体/贾维斯/runtime-v0.1/references/knowledge-model-and-ingest.md`
-- `智能体/贾维斯/runtime-v0.1/references/medical-and-design-safety.md`
+- `jarvis/references/evidence-pack-spec.md`
+
+on_demand_references:
+- `jarvis/references/knowledge-model-and-ingest.md`
+- `jarvis/plugins/medical/safety.md`
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/ingest_evidence_pack.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/validate_links.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/knowledge_link_stats.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/append_operation_log.py`
+- `jarvis/scripts/ingest_evidence_pack.py`
+- `jarvis/scripts/validate_links.py`
+- `jarvis/scripts/knowledge_link_stats.py`
+- `jarvis/scripts/append_operation_log.py`
 
 write_level:
 - content_write after confirmation

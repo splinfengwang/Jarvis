@@ -26,13 +26,15 @@ outputs:
 - 待拍板、跟进事项和阻塞项。
 - 明确声明未写入。
 
-required_references:
-- `智能体/贾维斯/runtime-v0.1/references/context-pack-spec.md`
-- `智能体/贾维斯/runtime-v0.1/references/topic-lifecycle.md`
+required_references: []
+
+on_demand_references:
+- `jarvis/references/context-pack-spec.md`
+- `jarvis/references/topic-lifecycle.md`
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/validate_dashboard.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/term_health_check.py`
+- `jarvis/scripts/validate_dashboard.py`
+- `jarvis/scripts/term_health_check.py`
 
 write_level:
 - none

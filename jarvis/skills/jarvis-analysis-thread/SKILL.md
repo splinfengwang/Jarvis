@@ -25,12 +25,14 @@ outputs:
 - frontmatter 更新预览
 - related 双链更新预览
 
-required_references:
-- `智能体/贾维斯/runtime-v0.1/references/analysis-thread.md`
-- `智能体/贾维斯/runtime-v0.1/references/write-permission.md`
+required_references: []
+
+on_demand_references:
+- `jarvis/references/analysis-thread.md`
+- `jarvis/references/write-permission.md`
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/append_operation_log.py`
+- `jarvis/scripts/append_operation_log.py`
 
 write_level:
 - record_write (状态变更) / content_write after confirmation (修改分析正文)

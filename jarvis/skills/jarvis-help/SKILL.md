@@ -21,7 +21,7 @@ non_trigger:
 inputs:
 - 用户原始请求。
 - `platform-ops/仪表盘.md`。
-- 必要时读取 `智能体/贾维斯/runtime-v0.1/references/router-spec.md`。
+- 必要时读取 `jarvis/references/router-spec.md`。
 
 outputs:
 - Router 输出。
@@ -30,9 +30,11 @@ outputs:
 - 下一步建议，区分必做和可选。
 
 required_references:
-- `智能体/贾维斯/runtime-v0.1/JARVIS_BOOTSTRAP.md`
-- `智能体/贾维斯/runtime-v0.1/JARVIS_CORE.md`
-- `智能体/贾维斯/runtime-v0.1/references/router-spec.md`
+- `jarvis/core/JARVIS_CORE.md`
+
+on_demand_references:
+- `jarvis/core/JARVIS_BOOTSTRAP.md`
+- `jarvis/references/router-spec.md`
 
 allowed_scripts:
 - none

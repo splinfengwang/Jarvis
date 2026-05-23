@@ -27,15 +27,17 @@ outputs:
 - needs_freeze / needs_followup / needs_topic_create
 - reason
 
-required_references:
-- `智能体/贾维斯/runtime-v0.1/references/conversation-governance.md`
-- `智能体/贾维斯/runtime-v0.1/references/topic-lifecycle.md`
-- `智能体/贾维斯/runtime-v0.1/references/context-pack-spec.md`
+required_references: []
+
+on_demand_references:
+- `jarvis/references/conversation-governance.md`
+- `jarvis/references/topic-lifecycle.md`
+- `jarvis/references/context-pack-spec.md`
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/sync_followup.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/update_snapshot.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/update_topic_status.py`
+- `jarvis/scripts/sync_followup.py`
+- `jarvis/scripts/update_snapshot.py`
+- `jarvis/scripts/update_topic_status.py`
 
 write_level:
 - none by default

@@ -23,11 +23,13 @@ outputs:
 - 若失败，返回明确错误类型。
 - 明确声明未写入。
 
-required_references:
-- `智能体/贾维斯/runtime-v0.1/references/memory-and-sources.md`
+required_references: []
+
+on_demand_references:
+- `jarvis/references/memory-and-sources.md`
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/confluence_query.py`
+- `jarvis/scripts/confluence_query.py`
 
 write_level:
 - none

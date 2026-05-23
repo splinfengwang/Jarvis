@@ -26,19 +26,19 @@ outputs:
 - 不入库声明。
 
 required_references:
-- `智能体/贾维斯/runtime-v0.1/references/evidence-pack-spec.md`
-- `智能体/贾维斯/runtime-v0.1/references/knowledge-extraction.md`
+- `jarvis/references/evidence-pack-spec.md`
 
 on_demand_references:
-- `智能体/贾维斯/runtime-v0.1/research-cards/PlugMem.md`
-- `智能体/贾维斯/runtime-v0.1/research-cards/ByteRover.md`
+- `jarvis/references/knowledge-extraction.md`
+- `jarvis/research-cards/PlugMem.md`
+- `jarvis/research-cards/ByteRover.md`
 - 仅在解释 Evidence Pack 来源、发生证据追溯失败或修改萃取协议时读取。
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/extract_evidence_pack.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/locate_session_jsonl.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/validate_links.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/knowledge_link_stats.py`
+- `jarvis/scripts/extract_evidence_pack.py`
+- `jarvis/scripts/locate_session_jsonl.py`
+- `jarvis/scripts/validate_links.py`
+- `jarvis/scripts/knowledge_link_stats.py`
 
 write_level:
 - none

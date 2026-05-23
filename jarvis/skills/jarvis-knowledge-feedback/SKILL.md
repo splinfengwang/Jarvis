@@ -27,13 +27,15 @@ outputs:
 - validation result。
 
 required_references:
-- `智能体/贾维斯/runtime-v0.1/references/knowledge-model-and-ingest.md`
-- `智能体/贾维斯/runtime-v0.1/references/medical-and-design-safety.md`
+- `jarvis/plugins/medical/safety.md`
+
+on_demand_references:
+- `jarvis/references/knowledge-model-and-ingest.md`
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/record_knowledge_feedback.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/sync_followup.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/append_operation_log.py`
+- `jarvis/scripts/record_knowledge_feedback.py`
+- `jarvis/scripts/sync_followup.py`
+- `jarvis/scripts/append_operation_log.py`
 
 write_level:
 - content_write after confirmation

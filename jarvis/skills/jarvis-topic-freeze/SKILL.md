@@ -32,18 +32,20 @@ outputs:
 - validation result。
 
 required_references:
-- `智能体/贾维斯/runtime-v0.1/references/topic-lifecycle.md`
-- `智能体/贾维斯/runtime-v0.1/references/session-locating.md`
-- `智能体/贾维斯/runtime-v0.1/references/write-permission.md`
+- `jarvis/references/write-permission.md`
+
+on_demand_references:
+- `jarvis/references/topic-lifecycle.md`
+- `jarvis/references/session-locating.md`
 
 allowed_scripts:
-- `智能体/贾维斯/runtime-v0.1/scripts/locate_session_jsonl.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/update_snapshot.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/update_topic_status.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/sync_topic_index.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/append_operation_log.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/validate_dashboard.py`
-- `智能体/贾维斯/runtime-v0.1/scripts/memcommit_adapter.py`
+- `jarvis/scripts/locate_session_jsonl.py`
+- `jarvis/scripts/update_snapshot.py`
+- `jarvis/scripts/update_topic_status.py`
+- `jarvis/scripts/sync_topic_index.py`
+- `jarvis/scripts/append_operation_log.py`
+- `jarvis/scripts/validate_dashboard.py`
+- `jarvis/scripts/memcommit_adapter.py`
 
 write_level:
 - record_write
