@@ -20,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 JARVIS_PKG="$SCRIPT_DIR/jarvis"  # Python package dir (core/hooks/skills/templates live here)
 TARGET="${1:-$(pwd)}"
 
-echo "=== Jarvis v1.0.0 Install ==="
+echo "=== Jarvis v1.5.0 Install ==="
 echo "Target: $TARGET"
 echo "Jarvis:  $JARVIS_PKG"
 
@@ -71,7 +71,7 @@ else
     cat > "$TARGET/CLAUDE.md" << 'CLAUDE_EOF'
 # 项目默认智能体入口
 
-本项目使用 [Jarvis](https://github.com/linfeng/jarvis) (v1.0) 作为智能体框架。
+本项目使用 [Jarvis](https://github.com/linfeng/jarvis) (v1.5.0) 作为智能体框架。
 
 ## 启动规则
 
@@ -167,7 +167,7 @@ if [ -f "$TARGET/jarvis.yaml" ]; then
 else
     cat > "$TARGET/jarvis.yaml" << YAML_EOF
 # Jarvis project configuration
-jarvis_version: "1.0.0"
+jarvis_version: "1.5.0"
 jarvis_home: "${JARVIS_HOME}"
 
 paths:
@@ -319,7 +319,7 @@ if [ ! -f "$TARGET/platform-ops/log.md" ]; then
 
 ---
 
-## [$date] install | Jarvis v1.0.0 安装
+## [$date] install | Jarvis v1.5.0 安装
 LOG_EOF
     echo "  [ok]   platform-ops/log.md"
 fi

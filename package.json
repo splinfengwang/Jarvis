@@ -1,6 +1,6 @@
 {
   "name": "jarvis",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Jarvis — An LLM-native agent framework for long-term work assistance. Provides Core behavior protocols, skill packs, hooks engine, and knowledge base management.",
   "main": "install.sh",
   "bin": {

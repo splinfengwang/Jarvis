@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v1.5.0 (2026-05-23)
+
+### 重构
+- **Core 重组为三层决策树**: §0 入口路由表（15 个 skill 触发词映射）、§§1-7 行动约束层、§§8-14 深度上下文层。路由决策从 400 行后提前到前 60 行
+- **References 降级**: 所有 skill 的 required_references 从 2-3 个降至 ≤1 个，超出移入 on_demand_references
+- **路径漂移修复**: 15 个 SKILL.md 中 `智能体/贾维斯/runtime-v0.1/` → `jarvis/`
+
+### 新增
+- **next_skills 字段**: 6 个 skill 定义显式过渡边，形成完整的工作流图
+- **写操作关键规范**: Core §6 新增 5 条规范（禁止整页重写仪表盘、双链转义、批量先创建后关联等）
+- **confuence_query.py**: 从 fixtures 恢复到 jarvis/scripts/
+
+### 修复
+- `install.sh` 日期变量 `date=$date` 自赋值 → `date=$(date +%Y-%m-%d)`
+- 不存在的引用 `medical-and-design-safety.md` → `plugins/medical/safety.md`
+- 版本号统一为 1.5.0（`__init__.py` 为单一真相源）
+
 ## v1.4.1 (2026-05-22)
 
 ### 改进
