@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.6.0 (2026-05-26)
+
+### 新增
+- **jarvis-knowledge-model skill**: 从 AGENT_v3.4 §3 提取完整知识模型（L1-L4/F、ABC 分类、术语生命周期、入账规则）
+- **双重治理解决**: AGENT_v3.4 降级为历史参考，Bootstrap/Core 明确 Core + Skills 为主规程
+
+### 修复
+- **写守卫扩展**: 保护范围扩展到全部框架关键文件 + bash 危险命令检测加固
+- **hook 超时**: SessionStart/PreToolUse/PreCompact 从 5s 提升到 15s
+- **compact 校验**: head -3 改为全文件 grep 三标记验证
+- **Linux trash**: 新增 gio trash + XDG Trash 回退
+- **CLI 版本**: 从 jarvis/__init__.py 动态读取，不再硬编码
+
 ## v1.5.0 (2026-05-23)
 
 ### 重构
@@ -9,21 +22,14 @@
 - **路径漂移修复**: 15 个 SKILL.md 中 `智能体/贾维斯/runtime-v0.1/` → `jarvis/`
 
 ### 新增
-- **jarvis-knowledge-model skill**: 从 AGENT_v3.4 §3 提取完整知识模型（L1-L4/F 五层、ABC 分类、术语生命周期、入账规则）
 - **next_skills 字段**: 6 个 skill 定义显式过渡边，形成完整的工作流图
 - **写操作关键规范**: Core §6 新增 5 条规范（禁止整页重写仪表盘、双链转义、批量先创建后关联等）
 - **confuence_query.py**: 从 fixtures 恢复到 jarvis/scripts/
-- **双重治理解决**: AGENT_v3.4 降级为历史参考，日常以 Core + Skills 为准
 
 ### 修复
 - `install.sh` 日期变量 `date=$date` 自赋值 → `date=$(date +%Y-%m-%d)`
 - 不存在的引用 `medical-and-design-safety.md` → `plugins/medical/safety.md`
 - 版本号统一为 1.5.0（`__init__.py` 为单一真相源）
-- **写守卫扩展**: 保护范围从 JARVIS_CORE.md 扩展到全部框架关键文件 + bash 危险命令加固
-- **hook 超时**: SessionStart/PreToolUse/PreCompact 从 5s 提升到 15s
-- **compact 校验**: head -3 改为全文件三标记验证
-- **Linux trash**: 新增 gio trash + XDG ~/.local/share/Trash 回退
-- **CLI 版本**: 从 jarvis/__init__.py 动态读取，不再硬编码
 
 ## v1.4.1 (2026-05-22)
 
