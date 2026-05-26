@@ -19,6 +19,11 @@
 - `install.sh` 日期变量 `date=$date` 自赋值 → `date=$(date +%Y-%m-%d)`
 - 不存在的引用 `medical-and-design-safety.md` → `plugins/medical/safety.md`
 - 版本号统一为 1.5.0（`__init__.py` 为单一真相源）
+- **写守卫扩展**: 保护范围从 JARVIS_CORE.md 扩展到全部框架关键文件 + bash 危险命令加固
+- **hook 超时**: SessionStart/PreToolUse/PreCompact 从 5s 提升到 15s
+- **compact 校验**: head -3 改为全文件三标记验证
+- **Linux trash**: 新增 gio trash + XDG ~/.local/share/Trash 回退
+- **CLI 版本**: 从 jarvis/__init__.py 动态读取，不再硬编码
 
 ## v1.4.1 (2026-05-22)
 
