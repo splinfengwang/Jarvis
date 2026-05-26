@@ -123,7 +123,7 @@ else
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/jarvis-core-inject.sh\"",
-            "timeout": 5
+            "timeout": 15
           }
         ]
       }
@@ -135,7 +135,7 @@ else
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/jarvis-write-guard.sh\"",
-            "timeout": 5
+            "timeout": 15
           }
         ]
       }
@@ -147,7 +147,7 @@ else
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/jarvis-compact-save.sh\"",
-            "timeout": 5
+            "timeout": 15
           }
         ]
       }

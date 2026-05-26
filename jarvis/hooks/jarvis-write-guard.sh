@@ -12,7 +12,7 @@ fi
 FILE_PATH=""
 if [ "$TOOL_NAME" = "Bash" ]; then
     COMMAND=$(echo "$HOOK_INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" 2>/dev/null || echo "")
-    DANGER='rm[[:space:]]+-rf|git[[:space:]]+reset[[:space:]]+--hard|git[[:space:]]+clean[[:space:]]+-f'
+    DANGER='rm[[:space:]]+-[rRf]|git[[:space:]]+reset[[:space:]]+--hard|git[[:space:]]+clean[[:space:]]+-[fd]|mv[[:space:]].*[[:space:]]/(bin|etc|dev|lib)|dd[[:space:]]+if=|>[[:space:]]*(/dev|/etc|/bin)|chmod[[:space:]]+-R[[:space:]]+777'
     if echo "$COMMAND" | grep -qiE "$DANGER"; then
         printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"[Jarvis Guard] high-risk bash command"}}\n'
         exit 0
@@ -26,9 +26,10 @@ if [ -z "$FILE_PATH" ]; then
     exit 0
 fi
 
-# deny: JARVIS_CORE.md modification
-if echo "$FILE_PATH" | grep -qE '(^|/)JARVIS_CORE\.md$'; then
-    printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"[Jarvis Guard] Core modification requires explicit authorization"}}\n'
+# deny: critical Jarvis framework files
+CRITICAL='JARVIS_CORE\.md|JARVIS_BOOTSTRAP\.md|AGENT_v3\.4\.md|/SKILL\.md|/hooks/[^/]+\.sh|/scripts/[^/]+\.py|jarvis/cli\.py|jarvis/lib\.py|jarvis/__init__\.py'
+if echo "$FILE_PATH" | grep -qE "(^|/)($CRITICAL)"; then
+    printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"[Jarvis Guard] Framework file modification requires explicit authorization"}}\n'
     exit 0
 fi
 

@@ -361,7 +361,33 @@ def trash_path(path: str | Path) -> bool:
     except Exception:
         pass
 
-    # Fallback: mv to ~/.Trash (no Put Back, but still recoverable)
+    # Fallback A: gio trash (Linux GNOME/kde — supports Trash)
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["gio", "trash", str(target)],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0 and not target.exists():
+            return True
+    except Exception:
+        pass
+
+    # Fallback B: mv to ~/.local/share/Trash/files (Linux XDG)
+    xdg_trash = Path.home() / ".local" / "share" / "Trash" / "files"
+    if xdg_trash.is_dir():
+        dest = xdg_trash / target.name
+        if dest.exists():
+            from datetime import datetime
+            ts = datetime.now().strftime("%H%M%S")
+            dest = xdg_trash / f"{target.stem}_{ts}{target.suffix}"
+        try:
+            target.rename(dest)
+            return True
+        except OSError:
+            pass
+
+    # Fallback C: mv to ~/.Trash (macOS — no Put Back, but still recoverable)
     trash_dir = Path.home() / ".Trash"
     if trash_dir.is_dir():
         dest = trash_dir / target.name
