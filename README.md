@@ -108,6 +108,17 @@ my-project/
 └── .claude/                 # → jarvis/skills + jarvis/hooks
 ```
 
+### 升级
+
+```bash
+# editable install 直接 git pull 即可
+cd ~/path/to/jarvis
+git pull
+
+# 不需要重跑 pipx install 或 jarvis init
+# 软链接 + editable install 会跟随源码自动更新
+```
+
 ### 安装检查
 
 ```bash
