@@ -31,6 +31,7 @@ required_references:
 - `jarvis/references/evidence-pack-spec.md`
 
 on_demand_references:
+- `jarvis-knowledge-model`
 - `jarvis/references/knowledge-extraction.md`
 - `jarvis/research-cards/PlugMem.md`
 - `jarvis/research-cards/ByteRover.md`

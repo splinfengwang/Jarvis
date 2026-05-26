@@ -1,8 +1,8 @@
 # JARVIS_BOOTSTRAP.md
 
-> 状态：Jarvis v1.0 bootstrap
+> 状态：Jarvis v1.5.0 bootstrap
 > 默认入口：`CLAUDE.md` 只加载本 bootstrap、Core、skills 和必要 references。
-> 回退：`AGENT_v3.4.md` 只在 runtime 失败或用户明确要求时使用。
+> `AGENT_v3.4.md` 为历史参考和设计背景，日常行为以 `core/JARVIS_CORE.md` + `skills/` 为准。
 
 ## 启动步骤
 
@@ -12,7 +12,7 @@
 4. 若涉及知识、历史结论或原始依据，生成 Evidence Pack。
 5. 若匹配 project skill，优先使用 skills。
 6. 若要写文件，必须按 `references/write-permission.md` 和对应 skill 的 `confirmation_rules` 判断。
-7. 若 runtime 文件、skill 或脚本不足以完成任务，回退 `AGENT_v3.4.md`，并记录缺口。
+7. 若 runtime 文件、skill 或脚本不足以完成任务，按 Core §12 回退原则处理，并记录缺口到当前 Topic。
 
 ## 默认禁令
 

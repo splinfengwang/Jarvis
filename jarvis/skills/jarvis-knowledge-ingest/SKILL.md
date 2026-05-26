@@ -32,6 +32,7 @@ required_references:
 - `jarvis/references/evidence-pack-spec.md`
 
 on_demand_references:
+- `jarvis-knowledge-model`
 - `jarvis/references/knowledge-model-and-ingest.md`
 - `jarvis/plugins/medical/safety.md`
 
