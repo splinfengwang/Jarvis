@@ -56,7 +56,7 @@ paths:
 
 ## 使用规则
 
-1. 脚本通过 `jarvis_lib.py` 的 `get_path(key)` 函数获取路径，不硬编码
+1. 脚本通过 `jarvis/lib.py` 的 `get_path(key)` 函数获取路径，不硬编码
 2. Skill 的 SKILL.md 中引用路径使用概念名（"仪表盘""wiki索引"），由框架解析
 3. 用户可通过修改 `jarvis.yaml` 自定义路径（如将 `知识库` 改为 `docs/kb`）
 4. `jarvis init` 使用默认中文路径，`jarvis doctor` 验证路径存在

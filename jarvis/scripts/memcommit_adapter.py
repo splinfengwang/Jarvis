@@ -26,6 +26,12 @@ from pathlib import Path
 from urllib import request
 from urllib.error import URLError
 
+import sys
+_script_dir = Path(__file__).resolve().parent
+_jarvis_root = _script_dir.parent.parent
+if str(_jarvis_root) not in sys.path:
+    sys.path.insert(0, str(_jarvis_root))
+
 DEFAULT_BASE_URL = "http://localhost:1933"
 RESOURCES_ENDPOINT = "/api/v1/resources"
 REQUEST_TIMEOUT = 30
@@ -169,13 +175,7 @@ def commit_memory(
     finally:
         if temp_path:
             try:
-                import sys
-_script_dir = Path(__file__).resolve().parent
-_jarvis_root = _script_dir.parent.parent
-if str(_jarvis_root) not in sys.path:
-    sys.path.insert(0, str(_jarvis_root))
-
-from jarvis.lib import trash_path
+                from jarvis.lib import trash_path
                 trash_path(temp_path)
             except Exception:
                 pass
