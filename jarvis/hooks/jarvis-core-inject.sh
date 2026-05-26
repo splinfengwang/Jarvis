@@ -474,7 +474,11 @@ if [ -f "$COMPACT_STATE" ]; then
     if [ "$age" -le 7200 ]; then
         STATE_CONTENT=$(cat "$COMPACT_STATE")
         # Security: skip if state file looks corrupted or is not a Jarvis dump
-        if ! echo "$STATE_CONTENT" | head -3 | grep -q "Jarvis State Dump\|Active Topic\|Timestamp"; then
+        # Validate state dump integrity — require all three markers anywhere in file
+        HAS_DUMP=$(echo "$STATE_CONTENT" | grep -c "Jarvis State Dump" || true)
+        HAS_TOPIC=$(echo "$STATE_CONTENT" | grep -c "Active Topic" || true)
+        HAS_TIME=$(echo "$STATE_CONTENT" | grep -c "Timestamp" || true)
+        if [ "$HAS_DUMP" -eq 0 ] || [ "$HAS_TOPIC" -eq 0 ] || [ "$HAS_TIME" -eq 0 ]; then
             STATE_CONTENT=""
         fi
         STATE_ESCAPED=$(escape_for_json "$STATE_CONTENT")

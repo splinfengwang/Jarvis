@@ -11,7 +11,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-JARVIS_VERSION = "1.5.0"
+try:
+    from jarvis import __version__ as JARVIS_VERSION
+except ImportError:
+    JARVIS_VERSION = "1.5.0"  # fallback for bootstrap / non-installed context
 
 
 def now_date() -> str:
