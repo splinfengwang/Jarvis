@@ -1,10 +1,15 @@
 #!/bin/bash
 # Jarvis Runtime — SessionStart hook: inject JARVIS_CORE.md via additionalContext
 # Supports plugin injection and path config mapping from jarvis.yaml
-set -euo pipefail
+set -eo pipefail  # Note: NO -u — project environment may lack some vars in VSCode extension context
 
 # Resolve jarvis home from hook's own location (works through symlinks)
-SCRIPT_DIR="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}" 2>/dev/null || readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")" && pwd)"
+# macOS: realpath/readlink -f not available by default — use python3 os.path.realpath as fallback
+_hook_file="${BASH_SOURCE[0]}"
+_hook_real="$([ -x /usr/bin/realpath ] && /usr/bin/realpath "$_hook_file" 2>/dev/null || true)"
+[ -z "$_hook_real" ] && _hook_real="$(readlink -f "$_hook_file" 2>/dev/null || true)"
+[ -z "$_hook_real" ] && _hook_real="$(python3 -c "import os; print(os.path.realpath('$_hook_file'))" 2>/dev/null || echo "$_hook_file")"
+SCRIPT_DIR="$(cd "$(dirname "$_hook_real")" && pwd)"
 JARVIS_HOME="$(dirname "$SCRIPT_DIR")"
 CORE_PATH="${JARVIS_HOME}/core/JARVIS_CORE.md"
 COMPACT_STATE="${HOME}/.jarvis/compact-state.md"
@@ -492,6 +497,7 @@ fi
 
 # ── 输出 ──
 if [ -z "$context_parts" ]; then
+    printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"[JARVIS_WARNING] Hook ran but produced no context. Check: python3 available? jarvis.yaml found? Core file readable at %s? Fallback: manually read JARVIS_BOOTSTRAP.md."}}\n' "$CORE_PATH"
     exit 0
 fi
 
