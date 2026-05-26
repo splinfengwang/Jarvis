@@ -9,9 +9,11 @@
 - **路径漂移修复**: 15 个 SKILL.md 中 `智能体/贾维斯/runtime-v0.1/` → `jarvis/`
 
 ### 新增
+- **jarvis-knowledge-model skill**: 从 AGENT_v3.4 §3 提取完整知识模型（L1-L4/F 五层、ABC 分类、术语生命周期、入账规则）
 - **next_skills 字段**: 6 个 skill 定义显式过渡边，形成完整的工作流图
 - **写操作关键规范**: Core §6 新增 5 条规范（禁止整页重写仪表盘、双链转义、批量先创建后关联等）
 - **confuence_query.py**: 从 fixtures 恢复到 jarvis/scripts/
+- **双重治理解决**: AGENT_v3.4 降级为历史参考，日常以 Core + Skills 为准
 
 ### 修复
 - `install.sh` 日期变量 `date=$date` 自赋值 → `date=$(date +%Y-%m-%d)`
