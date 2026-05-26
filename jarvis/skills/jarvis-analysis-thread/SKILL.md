@@ -1,6 +1,9 @@
 ---
 name: jarvis-analysis-thread
 description: 分析线程状态管理。用于"这个分析先存档""提案确认一下""这个方向废弃"。管理分析文档的状态流转（讨论中/提案/已确认/已废弃）和 related 双链。
+next_skills:
+  - jarvis-followup-sync
+  - jarvis-topic-close
 ---
 
 # jarvis-analysis-thread

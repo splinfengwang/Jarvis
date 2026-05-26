@@ -1,6 +1,10 @@
 ---
 name: jarvis-fragment-triage
 description: 对碎片输入做分流，并检测是否已经偏离当前 Topic。用于“顺便说一句…”“这个先记一下”“我们换个话题”。默认只做路由和治理判断，不直接写入。
+next_skills:
+  - jarvis-topic-create
+  - jarvis-followup-sync
+  - jarvis-topic-freeze
 ---
 
 # jarvis-fragment-triage

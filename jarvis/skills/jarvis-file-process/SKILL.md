@@ -1,6 +1,8 @@
 ---
 name: jarvis-file-process
 description: 将 OCR / 文档解析结果立刻文档化为可人工复核、可后续复用的业务文档。用于“先把这份 OCR 结果落文档”“把这份宣传页解析结果整理出来”。不直接做知识入库。
+next_skills:
+  - jarvis-knowledge-extract
 ---
 
 # jarvis-file-process

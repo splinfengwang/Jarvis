@@ -1,6 +1,7 @@
 ---
 name: jarvis-init
 description: 在 Claude Code 会话中初始化 Jarvis 行为框架。引导式对话：探测项目类型 → 角色协商 → 执行安装 → 验证 → Onboarding。用于"初始化 Jarvis""在这个项目装 Jarvis""帮我配置 Jarvis"。
+next_skills: []
 ---
 
 # jarvis-init

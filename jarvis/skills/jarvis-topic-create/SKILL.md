@@ -1,6 +1,7 @@
 ---
 name: jarvis-topic-create
 description: 创建 Jarvis Topic 骨架。用于“先建立 Topic”“开一个 Topic”“新建话题”。脚本默认 dry-run；当用户明确要求建立 Topic 且计划校验无冲突时，可在同轮用 --write 执行记录性写入。
+next_skills: []
 ---
 
 # jarvis-topic-create

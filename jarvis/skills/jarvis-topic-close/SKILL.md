@@ -1,6 +1,8 @@
 ---
 name: jarvis-topic-close
 description: 关闭 Jarvis Topic 并转入待萃取。用于“这个 Topic 收一下”“这个结束”。关闭不等于自动知识萃取。
+next_skills:
+  - jarvis-knowledge-extract
 ---
 
 # jarvis-topic-close
