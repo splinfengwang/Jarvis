@@ -4,8 +4,10 @@
 
 ## 启动规则
 
-1. 会话启动时，Core 通过 SessionStart hook 自动注入上下文。
-2. Hook 不可用时，手动读取 jarvis 安装目录下的 `core/JARVIS_BOOTSTRAP.md` 并遵循。
+1. **先检测**：搜索你的系统上下文，看是否存在 `[JARVIS_CORE]` 或 `[JARVIS_KNOWLEDGE_SNAPSHOT]` 标记。
+   - 存在 → Jarvis 已自动注入，直接开始工作。
+   - 不存在 → 执行步骤 2。
+2. **Fallback**：读取 `jarvis.yaml` → 获取 `jarvis_home` → 手动读取 `$jarvis_home/core/JARVIS_BOOTSTRAP.md` 并遵循。
 3. Jarvis 的 skill、scripts、references 构成完整的可执行工作流。
 
 ## 默认边界
