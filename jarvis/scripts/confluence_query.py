@@ -16,7 +16,7 @@ _jarvis_root = _script_dir.parent.parent
 if str(_jarvis_root) not in sys.path:
     sys.path.insert(0, str(_jarvis_root))
 
-from jarvis_lib import print_validation, write_json_result
+from jarvis.lib import print_validation, write_json_result
 
 
 def load_cookie(cookie_file: Path) -> str:
