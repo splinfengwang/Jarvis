@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-JARVIS_VERSION = "1.4.1"
+JARVIS_VERSION = "1.5.0"
 
 
 def now_date() -> str:
@@ -98,7 +98,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             continue
         content = content.replace("{{DATE}}", date)
         content = content.replace("{{PROJECT_NAME}}", target.name)
-        content = content.replace("{{JARVIS_VERSION}}", "1.0.0")
+        content = content.replace("{{JARVIS_VERSION}}", JARVIS_VERSION)
         _safe_write(file_path, content, rel_path)
 
     # Handle CLAUDE.md — interactive if already exists
@@ -135,7 +135,7 @@ def cmd_init(args: argparse.Namespace) -> int:
                 claude_path.rename(backup)
                 print(f"  旧文件已备份为 CLAUDE.md.bak")
                 content = resolve_template("CLAUDE.md.tmpl")
-                content = content.replace("{{DATE}}", date).replace("{{PROJECT_NAME}}", target.name).replace("{{JARVIS_VERSION}}", "1.0.0")
+                content = content.replace("{{DATE}}", date).replace("{{PROJECT_NAME}}", target.name).replace("{{JARVIS_VERSION}}", JARVIS_VERSION)
                 _safe_write(claude_path, content, "CLAUDE.md")
             elif answer == "s":
                 print("  [skip] CLAUDE.md (保留原文件)")
@@ -144,14 +144,14 @@ def cmd_init(args: argparse.Namespace) -> int:
                 print("  [update] CLAUDE.md (已追加 Jarvis 引用)")
     else:
         content = resolve_template("CLAUDE.md.tmpl")
-        content = content.replace("{{DATE}}", date).replace("{{PROJECT_NAME}}", target.name).replace("{{JARVIS_VERSION}}", "1.0.0")
+        content = content.replace("{{DATE}}", date).replace("{{PROJECT_NAME}}", target.name).replace("{{JARVIS_VERSION}}", JARVIS_VERSION)
         _safe_write(claude_path, content, "CLAUDE.md")
 
     # Write jarvis.yaml
     config_path = target / "jarvis.yaml"
     if not config_path.exists():
         config_content = f"""# Jarvis project configuration
-jarvis_version: "1.0.0"
+jarvis_version: "{JARVIS_VERSION}"
 jarvis_home: "{jarvis_home}"
 
 paths:
