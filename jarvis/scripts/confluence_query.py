@@ -10,6 +10,12 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import sys
+_script_dir = Path(__file__).resolve().parent
+_jarvis_root = _script_dir.parent.parent
+if str(_jarvis_root) not in sys.path:
+    sys.path.insert(0, str(_jarvis_root))
+
 from jarvis_lib import print_validation, write_json_result
 
 

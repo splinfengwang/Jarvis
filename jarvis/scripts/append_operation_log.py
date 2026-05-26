@@ -5,6 +5,12 @@ from __future__ import annotations
 
 import argparse
 
+import sys
+_script_dir = Path(__file__).resolve().parent
+_jarvis_root = _script_dir.parent.parent
+if str(_jarvis_root) not in sys.path:
+    sys.path.insert(0, str(_jarvis_root))
+
 from jarvis.lib import (
     add_common_args,
     apply_changes,

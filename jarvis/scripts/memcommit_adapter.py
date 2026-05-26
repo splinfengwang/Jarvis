@@ -169,7 +169,13 @@ def commit_memory(
     finally:
         if temp_path:
             try:
-                from jarvis.lib import trash_path
+                import sys
+_script_dir = Path(__file__).resolve().parent
+_jarvis_root = _script_dir.parent.parent
+if str(_jarvis_root) not in sys.path:
+    sys.path.insert(0, str(_jarvis_root))
+
+from jarvis.lib import trash_path
                 trash_path(temp_path)
             except Exception:
                 pass
