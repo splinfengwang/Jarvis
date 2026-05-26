@@ -1,6 +1,7 @@
 ---
 name: jarvis-knowledge-ingest
 description: 按林峰确认范围把 Evidence Pack 入库，或给出人工入库计划。用于“A 组全确认”“这几条确认入库”。只处理明确确认范围。
+next_skills: []
 ---
 
 # jarvis-knowledge-ingest

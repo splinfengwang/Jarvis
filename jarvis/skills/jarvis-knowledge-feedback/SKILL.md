@@ -1,6 +1,7 @@
 ---
 name: jarvis-knowledge-feedback
 description: 记录知识在实际应用中的反馈。用于“这条先别用”“这条有冲突”“应用中发现不对”。会把反馈回写到知识条目，并在需要时建议进入跟进事项。
+next_skills: []
 ---
 
 # jarvis-knowledge-feedback

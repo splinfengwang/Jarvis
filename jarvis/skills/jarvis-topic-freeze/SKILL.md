@@ -1,6 +1,8 @@
 ---
 name: jarvis-topic-freeze
 description: 暂停或保存当前 Jarvis Topic。用于“这个先存一下”“先暂停”“先冻结”。只记录已发生事实和下一步。
+next_skills:
+  - jarvis-topic-resume
 ---
 
 # jarvis-topic-freeze

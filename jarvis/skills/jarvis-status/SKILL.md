@@ -1,6 +1,7 @@
 ---
 name: jarvis-status
 description: 读取 Jarvis 仪表盘、活跃 Topic 和待萃取区，回答“最近怎么样”“现在有哪些事”“当前下一步是什么”。只读，不写入。
+next_skills: []
 ---
 
 # jarvis-status

@@ -1,6 +1,7 @@
 ---
 name: jarvis-confluence-read
 description: 读取或搜索公司 Confluence 文档。用于“查一下 Confluence 这个页面”“搜一下公司文档里有没有这个词”。只读，不写入。
+next_skills: []
 ---
 
 # jarvis-confluence-read

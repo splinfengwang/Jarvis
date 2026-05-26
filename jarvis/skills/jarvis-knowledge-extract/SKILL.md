@@ -1,6 +1,8 @@
 ---
 name: jarvis-knowledge-extract
 description: 从 Topic 或会话中生成 Evidence Pack 和确认清单。用于“萃取一下这个 Topic”“整理可入库知识”。不自动入库。
+next_skills:
+  - jarvis-knowledge-ingest
 ---
 
 # jarvis-knowledge-extract

@@ -1,6 +1,7 @@
 ---
 name: jarvis-topic-resume
 description: 恢复已有 Jarvis Topic。用于“继续...”“接着上次...”“恢复某 Topic”。只读索引、快照和必要讨论记录。
+next_skills: []
 ---
 
 # jarvis-topic-resume

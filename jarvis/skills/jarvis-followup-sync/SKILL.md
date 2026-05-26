@@ -1,6 +1,7 @@
 ---
 name: jarvis-followup-sync
 description: 记录或更新跟进事项。用于“记一下这个跟进事项”“这个到时候提醒我”“等对方回复后继续”。只处理有时间窗口、外部责任人或明确下一步动作的事项。
+next_skills: []
 ---
 
 # jarvis-followup-sync

@@ -1,6 +1,7 @@
 ---
 name: jarvis-help
 description: Jarvis Runtime v0.1 的帮助、解释和模糊路由入口。用于“最近怎么样”“下一步做什么”“继续哪个 Topic”“为什么这样设计”“有哪些 Jarvis skill 可用”等状态、路由、解释和下一步建议请求；明确 workflow 请求由 Router 直接转对应 skill。
+next_skills: []
 ---
 
 # jarvis-help
