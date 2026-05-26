@@ -46,6 +46,10 @@ fallback_rules:
 - 找不到 Topic 时，按 `jarvis-status` 列候选。
 - 快照缺失时停止并说明需要补上下文。
 
+#### 恢复后自检
+
+Topic 恢复完成、用户开始新一轮讨论后，判断：本次讨论是否产生了新的工作命题？是 → 提议建 Topic（走 `jarvis-topic-create`）。不是 → 继续当前 Topic。
+
 acceptance_cases:
 - “继续贾维斯运行时架构” -> 读仪表盘、索引、快照并输出恢复摘要。
 - “继续上次那个” -> 多候选时询问。
