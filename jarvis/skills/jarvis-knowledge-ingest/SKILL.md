@@ -65,6 +65,22 @@ fallback_rules:
 - 写入后必须验证链接和索引。
 - 若确认范围内只有非 L1 / 非 semantic 条目，输出人工入库计划，不调用自动写入脚本。
 
+#### E 组处理：Topic 产出迁移
+
+E 组确认后，对每个建议迁移的文件执行以下步骤：
+
+```
+1. 确定 domain → 目标路径 业务/<域>/YYYY-MM-DD <域>-<主题>.md
+2. 补 frontmatter: source_topic / domain / status / version / related
+3. 更新双链: 全局搜索旧路径 → 替换为新路径
+4. 更新 wiki索引: 对应域下追加一行
+5. 更新 Topic 索引.md: 追加 ## 已迁移产出 节
+6. 原文件: 保留重定向页 或 删除
+7. 追加 platform-ops/log.md
+```
+
+对建议归档的文件：移到 知识资产/ 或保留在 Topic。
+
 acceptance_cases:
 - “A 组全确认” -> 只处理 A 组。
 - `needs_source` 条目 -> 不入库。
