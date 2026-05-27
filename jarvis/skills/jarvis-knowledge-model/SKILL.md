@@ -285,10 +285,10 @@ related: [[术语A]] [[术语B]] [[术语C]]
 |------|------|
 | **存什么** | L2 关系/规则、L3 判断/决策、L4 待验证问题、F 文件处理产物。嵌入分析文档中，通过双链与 L1 术语链接 |
 | **命名** | `YYYY-MM-DD <域>-<主题>.md`。F 产物同格式，通过 frontmatter 的 `quality`（📝/🔍/🧠）+ `source_files` 区分 |
-| **创建者** | ① Topic 关闭后萃取迁移（`jarvis-knowledge-ingest` 从 E 组确认后执行迁移）② 直接在知识库中创建（需更新 wiki索引）③ `jarvis-file-process` 落文档（F 产物） |
+| **创建者** | ① 新建文件时优先判断：脱离 Topic 后还有人需要读到它吗？是 → 直接创建在 `业务/<域>/`，Topic 中只留双链引用。否 → 创建在 Topic 目录 ② `jarvis-knowledge-ingest` G 组独立存放 ③ `jarvis-file-process` 落文档（F 产物）④ 直接在知识库中创建 |
 | **消费者** | 检索 L1（查分析文档）、新工作命题（了解已有分析结论）、知识萃取对照（查重复/冲突）|
 | **维护** | frontmatter 必须含 `domain`、`status`、`version`、`related`。status 流转：讨论中→提案→已确认→已废弃。废弃不删除 |
-| **从 Topic 迁移流程** | ① 重命名 → ② 补 frontmatter + `source_topic` 字段 → ③ 全局搜索旧路径，更新所有双链 → ④ 更新 wiki索引 → ⑤ 在 Topic 索引.md 追加"已迁移产出"节 → ⑥ 原位置替换为重定向页或删除 |
+| **从 Topic 独立存放** | G 组确认后三步：① 复制到业务/<域>/，改名补 frontmatter → ② 更新 wiki索引 → ③ 原文件改名 _archived_原文件名.md。不修双链，不删原文件。wiki索引是唯一权威入口 |
 
 ### platform-ops/仪表盘.md
 
