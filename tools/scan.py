@@ -2,9 +2,10 @@ import os, re, ast
 
 errors = []
 
-# 1. Core §0 routing covers all skills
+# 1. Core routing covers all skills (works for both brief and full)
 with open('jarvis/core/JARVIS_CORE.md') as f: core = f.read()
-s0 = core.split('## 0. 入口路由')[1].split('## 1. 行为框架')[0]
+s0 = core.split('## 入口路由')[1] if '## 入口路由' in core else core.split('## 0. 入口路由')[1]
+s0 = s0.split('\n##')[0]  # stop at next ## heading
 skills_in_core = set(re.findall(r'jarvis-[\w-]+', s0))
 actual_skills = {d for d in os.listdir('jarvis/skills') if os.path.isdir(os.path.join('jarvis/skills', d))}
 excluded = {'jarvis-knowledge-model'}  # no user trigger, referenced on-demand
