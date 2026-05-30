@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.7.0 (2026-05-26)
+
+### 重构
+- **Core 拆分为 brief/full**: brief 版 ~60 行（路由+铁律+检索+输出），agent 每次必读；full 版 575 行（完整参考），按需查阅。hook 注入 brief 版
+- **E 组拆分为 E+G**: E 组只管 F 层文件处理产物。新增 G 组管理 Topic 完整文档独立存放（3 步：复制→更新 wiki索引→原文件改名 _archived）
+
+### 新增
+- **jarvis-status 会话审计**: 回答近况时附加三项自检（wiki索引合规/声明块格式/子Agent委托）
+- **目录规格表**: knowledge-model skill 新增 8 个文件夹的完整职责定义
+
+### 修复
+- 写守卫 + bash 加固
+- 脚本 sys.path 批量修复（17 个脚本可独立运行）
+- 旧模块名 `jarvis_lib` → `jarvis.lib`
+- Core 路由表兜底行增加任务性质判断
+
 ## v1.6.0 (2026-05-26)
 
 ### 新增

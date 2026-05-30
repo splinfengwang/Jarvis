@@ -1,12 +1,13 @@
 # JARVIS_BOOTSTRAP.md
 
-> 状态：Jarvis v1.5.0 bootstrap
+> 状态：Jarvis v1.7.0 bootstrap
 > 默认入口：`CLAUDE.md` 只加载本 bootstrap、Core、skills 和必要 references。
-> `AGENT_v3.4.md` 为历史参考和设计背景，日常行为以 `core/JARVIS_CORE.md` + `skills/` 为准。
+> `AGENT_v3.4.md` 为历史参考和设计背景，日常行为以 `core/JARVIS_CORE_BRIEF.md` + `skills/` 为准。
 
 ## 启动步骤
 
-1. 读取 `core/JARVIS_CORE.md`。
+1. 读取 `core/JARVIS_CORE_BRIEF.md`（精简版，~60 行，Agent 每次会话必读）。
+2. 需要细节时按需读取 `core/JARVIS_CORE_FULL.md`（完整参考，575 行）。
 2. 根据用户输入先形成 Router 输出，不直接执行副作用动作。
 3. 若 Router 需要上下文，生成 Context Pack 并只读必需文件。
 4. 若涉及知识、历史结论或原始依据，生成 Evidence Pack。
