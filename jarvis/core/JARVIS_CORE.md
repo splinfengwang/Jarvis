@@ -24,6 +24,8 @@
 | "OCR 落文档" | `jarvis-file-process` |
 | "这条先别用" | `jarvis-knowledge-feedback` |
 | "这个分析存档" | `jarvis-analysis-thread` |
+| "A 组全确认""这几条入库" | `jarvis-knowledge-ingest` |
+| 需要帮助/不清楚该走哪个 skill | `jarvis-help` |
 | "初始化 Jarvis" | `jarvis-init` |
 | 以上都不匹配 | 先判断任务性质：单次问答→轻量模式。涉方案/设计/分析→新工作命题：wiki索引→仪表盘→判断建Topic |
 

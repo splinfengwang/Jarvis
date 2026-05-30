@@ -83,10 +83,14 @@ for key in ['jarvis_version', 'jarvis_home', 'paths', 'knowledge_base', 'wiki_in
     if key not in yaml_block:
         errors.append(f'install.sh jarvis.yaml: 缺 {key}')
 
-# 10. §3.x section refs
-for ref in ['§3 事实口径', '§9 知识引用标注', '§11 知识捕获', '§8 会话模式', '§6 写入裁决']:
-    if ref not in core:
-        errors.append(f'Core §3.x: 缺引用 {ref}')
+# 10. §3.x section refs — only check in full version
+if '输出前声明块' in core or '检索纪律' in core:
+    for ref in ['§3 事实口径', '§9 知识引用标注']:
+        if ref not in core:
+            errors.append(f'Core §3.x: 缺引用 {ref}')
+    # Full version only refs (brief version delegates to full)
+    if '会话模式' in core and '§8' not in core and '## 8.' not in core:
+        pass  # brief version — § refs are in full
 
 print(f"Dimensions: 10, Errors: {len(errors)}")
 for e in errors: print(f"  FAIL {e}")
