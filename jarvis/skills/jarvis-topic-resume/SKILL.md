@@ -19,6 +19,7 @@ inputs:
 - Topic 名称或关键词。
 - `platform-ops/仪表盘.md`。
 - 匹配到的 `索引.md` 和 `_上下文快照.md`。
+- 当前会话信息：工具、会话标识、JSONL 路径、工作区路径、日期。JSONL 未定位时写 `待确认`。
 
 outputs:
 - Topic 匹配结果。
@@ -33,14 +34,15 @@ on_demand_references:
 - `jarvis/references/topic-lifecycle.md`
 
 allowed_scripts:
-- none
+- `jarvis/scripts/locate_session_jsonl.py`
 
 write_level:
-- none
+- record_write
 
 confirmation_rules:
 - 模糊匹配或多候选时先确认。
-- 不更新快照，不写讨论记录。
+- 恢复后追加当前会话到快照的"关联会话"表（记录性写入：工具、会话标识、JSONL路径、日期）。
+- 不更新快照的"最后动作/下一步/未解决问题"，不写讨论记录。
 
 fallback_rules:
 - 找不到 Topic 时，按 `jarvis-status` 列候选。
