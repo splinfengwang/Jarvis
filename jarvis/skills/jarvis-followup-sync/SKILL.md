@@ -43,6 +43,7 @@ write_level:
 - record_write
 
 confirmation_rules:
+> ⚠️ 必须有事项名和下一步动作才能写入。信息不全 → 先确认，不猜测。
 - 必须有事项名和下一步动作。
 - 若截止/窗口缺失但用户明确说“后续提醒”，先补成 `待确认` 再记录。
 - 写入成功后追加一条 `platform-ops/log.md` 操作日志。

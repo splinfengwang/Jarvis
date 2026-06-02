@@ -47,6 +47,7 @@ write_level:
 - none by default
 
 confirmation_rules:
+> ⚠️ 只做路由和治理判断，不直接写入。要写入 → 走对应 skill。
 - 默认只给路由判断，不直接写入。
 - 若判定为 followup，推荐 `jarvis-followup-sync`。
 - 若判定为 topic_switch，先建议是否冻结当前 Topic。

@@ -41,6 +41,7 @@ write_level:
 - record_write (状态变更) / content_write after confirmation (修改分析正文)
 
 confirmation_rules:
+> ⚠️ 状态变更(仅改 frontmatter) = 可自主执行。修改分析正文 = 需确认。
 - 状态变更（仅改 frontmatter status）为记录性写入，可自主执行
 - 修改分析结论正文为内容性写入，需确认
 - `abandoned` 状态只标记，不删除文件

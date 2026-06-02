@@ -36,6 +36,7 @@ write_level:
 - none
 
 confirmation_rules:
+> ⚠️ 只读。读到内容后，知识萃取时才做结构化整理。
 - 只读，不写入本地文件。
 - 页面 ID 缺失时优先走搜索模式。
 

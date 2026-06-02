@@ -46,6 +46,7 @@ write_level:
 - content_write after confirmation
 
 confirmation_rules:
+> ⚠️ F 层产物必须标记 source_files + quality（📝/🔍/🧠）frontmatter。不标记 = 无法区分来源。
 - 该 skill 的目标是“先落可复核文档”，不是直接知识入库。
 - 文档必须保留 `source_files`、`processed_in`、`evidence_level=OCR文档解析`、`quality`。
 - 写入成功后追加一条 `platform-ops/log.md` 操作日志。

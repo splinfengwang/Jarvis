@@ -52,6 +52,7 @@ write_level:
 - record_write
 
 confirmation_rules:
+> ⚠️ 关闭后必须 git commit（含知识库变更）。未经 commit 的关闭不完整。
 - 关闭只同步状态，不自动萃取、不自动入库。
 - 关闭前必须处理最终关联会话：① 扫描中间会话：`--tool claude-code --cwd <项目路径> --date <上次记录日期>` 找到遗漏的中间会话 → 补入关联会话表。② 当前会话：`cat ~/.jarvis/current-session` 获取 id → `--session-id <id>` 追加。
 - 关闭时同步 `索引.md` 的 Next Action、关键产出和时间线。

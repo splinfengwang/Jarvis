@@ -42,6 +42,7 @@ write_level:
 - content_write after confirmation
 
 confirmation_rules:
+> ⚠️ 涉及医学参数/安全边界的反馈 → 默认转存疑，不能直接确认。
 - 必须明确指向具体知识条目。
 - 若反馈涉及医学参数、安全边界或核心判断，默认转 `存疑` 或 `待确认`，并建议跟进事项。
 - 写入成功后追加一条 `platform-ops/log.md` 操作日志。
