@@ -56,9 +56,9 @@ confirmation_rules:
 - 关闭只同步状态，不自动萃取、不自动入库。
 - 关闭前必须处理最终关联会话：① 扫描中间会话：`--tool claude-code --cwd <项目路径> --date <上次记录日期>` 找到遗漏的中间会话 → 补入关联会话表。② 当前会话：`cat ~/.jarvis/current-session` 获取 id → `--session-id <id>` 追加。
 - 关闭时同步 `索引.md` 的 Next Action、关键产出和时间线。
-- 写入成功后追加一条 `platform-ops/log.md` 操作日志。
+- 写入完成后立即 git commit（在 memcommit 之前）：`git add` Topic 目录 + 仪表盘 + log + 知识库变更 → `git commit -m "✅ 关闭: <Topic>"`。未经 commit 的关闭不完整。
+- 追加 `platform-ops/log.md` 操作日志。
 - 关闭写入完成后，调用 `memcommit_adapter.py --write --repo-root . --kind topic_close --topic <topic> --summary <摘要> --fact <事实> --decision <决策>` 写入 OpenViking 记忆。`--write` 为必传标志，缺省为 dry-run 仅预览不写入。若 adapter 返回 `skipped_or_failed`，记录 `memory_commit: skipped_or_failed` 到日志，不阻塞本地 Topic 闭环。
-- 关闭后必须将当前 Topic 相关变更提交到 git（`git add` 当前 Topic 目录 + 仪表盘 + log + 知识库变更，`git commit -m "✅ 关闭: <Topic>"`）。未经 commit 的关闭不完整，Topic 内容不受 git 保护。
 - 若要归档到 Done，需要林峰明确确认。
 
 fallback_rules:
