@@ -15,6 +15,12 @@ CORE_PATH="${JARVIS_HOME}/core/JARVIS_CORE.md"
 COMPACT_STATE="${HOME}/.jarvis/compact-state.md"
 JARVIS_YAML="${PWD}/jarvis.yaml"
 
+# Save current session ID for locate_session_jsonl.py --session-id
+mkdir -p "${HOME}/.jarvis"
+HOOK_INPUT=$(cat)
+SESSION_ID=$(echo "$HOOK_INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('session_id',''))" 2>/dev/null || echo "")
+[ -n "$SESSION_ID" ] && echo "$SESSION_ID" > "${HOME}/.jarvis/current-session"
+
 escape_for_json() {
     local s="$1"
     s="${s//\\/\\\\}"

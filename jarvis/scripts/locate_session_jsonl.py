@@ -49,6 +49,7 @@ def main() -> int:
     parser.add_argument("--date", default="")
     parser.add_argument("--home", default=str(Path.home()))
     parser.add_argument("--latest", action="store_true", help="Return the single most recent jsonl, ignoring all filters")
+    parser.add_argument("--session-id", default="", help="Match by session ID (exact filename match: ses_<id>.jsonl)")
     args = parser.parse_args()
 
     home = Path(args.home).expanduser().resolve()
@@ -58,7 +59,13 @@ def main() -> int:
             continue
         files.extend(root.rglob("*.jsonl"))
 
-    if args.latest:
+    if args.session_id:
+        # Exact match by session ID in filename: ses_<id>.jsonl
+        matched = [p for p in files if args.session_id in p.name]
+        if not matched:
+            # Try searching file content for session_id as fallback
+            matched = [p for p in files if contains_cwd(p, args.session_id)]
+    elif args.latest:
         files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
         matched = files[:1]
     else:

@@ -47,7 +47,7 @@ write_level:
 - script default remains dry-run
 
 confirmation_rules:
-- 创建前：`locate_session_jsonl.py --tool claude-code --latest` 获取当前会话 JSONL。失败 → `待确认 — tool=claude-code, date=now`
+- 创建前：读取 `~/.jarvis/current-session` 获取 session_id → `locate_session_jsonl.py --tool claude-code --session-id <id>`。失败 → `待确认`
 - 第一步必须输出创建计划和 diff preview。
 - 若用户已明确要求建立 Topic，且标题、范围、目录名、仪表盘行无歧义，可在同轮执行 `--write`。
 - 写入成功后追加一条 `platform-ops/log.md` 操作日志。

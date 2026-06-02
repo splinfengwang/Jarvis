@@ -54,7 +54,7 @@ write_level:
 
 confirmation_rules:
 - 只记录已发生事实，不写新判断。
-- 冻结前必须处理关联会话：① 扫描中间会话：`locate_session_jsonl.py --tool claude-code --cwd <项目路径> --date <上次记录日期>` 找到遗漏的中间会话 → 补入关联会话表。② 当前会话：`--latest` 追加。定位不到 → 标 `待确认 — tool=claude-code, date=now`。
+- 冻结前必须处理关联会话：① 扫描中间会话：`--tool claude-code --cwd <项目路径> --date <上次记录日期>` 找到遗漏的中间会话 → 补入关联会话表。② 当前会话：`cat ~/.jarvis/current-session` 获取 id → `--session-id <id>` 追加。
 - 冻结时同步 `索引.md` 的 Next Action、关键产出和时间线。
 - 写入成功后追加一条 `platform-ops/log.md` 操作日志。
 - 冻结写入完成后，调用 `memcommit_adapter.py --write --repo-root . --kind topic_freeze --topic <topic> --summary <摘要> --fact <事实> --decision <决策>` 写入 OpenViking 记忆。`--write` 为必传标志，缺省为 dry-run 仅预览不写入。若 adapter 返回 `skipped_or_failed`，记录 `memory_commit: skipped_or_failed` 到日志，不阻塞本地 Topic 闭环。
