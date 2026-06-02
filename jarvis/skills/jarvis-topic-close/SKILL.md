@@ -53,7 +53,7 @@ write_level:
 
 confirmation_rules:
 - 关闭只同步状态，不自动萃取、不自动入库。
-- 关闭前必须处理最终关联会话：能定位 JSONL 就写路径；不能定位就写 `待确认` 行。
+- 关闭前必须处理最终关联会话：① 快照中最后一次记录的会话到当前会话之间，扫描是否有遗漏的中间会话 JSONL（按 `.claude/sessions/` 修改时间排序）。有 → 补入关联会话表。② 当前会话追加到关联会话表。定位不到 → 标 `待确认`。
 - 关闭时同步 `索引.md` 的 Next Action、关键产出和时间线。
 - 写入成功后追加一条 `platform-ops/log.md` 操作日志。
 - 关闭写入完成后，调用 `memcommit_adapter.py --write --repo-root . --kind topic_close --topic <topic> --summary <摘要> --fact <事实> --decision <决策>` 写入 OpenViking 记忆。`--write` 为必传标志，缺省为 dry-run 仅预览不写入。若 adapter 返回 `skipped_or_failed`，记录 `memory_commit: skipped_or_failed` 到日志，不阻塞本地 Topic 闭环。
