@@ -19,7 +19,7 @@ inputs:
 - Topic 名称或关键词。
 - `platform-ops/仪表盘.md`。
 - 匹配到的 `索引.md` 和 `_上下文快照.md`。
-- 当前会话信息：工具、会话标识、JSONL 路径、工作区路径、日期。JSONL 未定位时写 `待确认`。
+- 当前会话信息：工具、会话标识、JSONL 路径、工作区路径、日期。JSONL 未定位时写 `待确认 — tool=工具名, session=会话ID, date=日期, cwd=工作区路径`。
 
 outputs:
 - Topic 匹配结果。
