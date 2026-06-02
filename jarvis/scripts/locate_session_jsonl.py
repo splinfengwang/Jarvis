@@ -20,7 +20,7 @@ def candidate_roots(tool: str, home: Path) -> list[Path]:
     if tool == "codex":
         return [home / ".codex" / "sessions", home / ".Codex" / "projects"]
     if tool == "claude-code":
-        return [home / ".claude" / "projects", home / ".claude" / "sessions"]
+        return [home / ".claude" / "transcripts", home / ".claude" / "projects", home / ".claude" / "sessions"]
     raise ValueError(tool)
 
 
@@ -45,9 +45,10 @@ def contains_cwd(path: Path, cwd: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tool", required=True, choices=["codex", "claude-code"])
-    parser.add_argument("--cwd", required=True)
+    parser.add_argument("--cwd", default="")
     parser.add_argument("--date", default="")
     parser.add_argument("--home", default=str(Path.home()))
+    parser.add_argument("--latest", action="store_true", help="Return the single most recent jsonl, ignoring all filters")
     args = parser.parse_args()
 
     home = Path(args.home).expanduser().resolve()
@@ -55,9 +56,14 @@ def main() -> int:
     for root in candidate_roots(args.tool, home):
         if not root.exists():
             continue
-        files.extend(path for path in root.rglob("*.jsonl") if matches_date(path, args.date or None))
+        files.extend(root.rglob("*.jsonl"))
 
-    matched = [path for path in files if contains_cwd(path, args.cwd)]
+    if args.latest:
+        files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        matched = files[:1]
+    else:
+        files = [p for p in files if matches_date(p, args.date or None)]
+        matched = [p for p in files if contains_cwd(p, args.cwd)] if args.cwd else files
     matched.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     payload = {
         "tool": args.tool,

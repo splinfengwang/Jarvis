@@ -47,7 +47,7 @@ write_level:
 - script default remains dry-run
 
 confirmation_rules:
-- 创建前必须尝试定位当前会话 JSONL；无法精确定位时，仍把 JSONL 路径写为 `待确认 — tool=工具名, session=会话ID, date=日期, cwd=工作区路径`，不能省略关联会话表。
+- 创建前：`locate_session_jsonl.py --tool claude-code --latest` 获取当前会话 JSONL。失败 → `待确认 — tool=claude-code, date=now`
 - 第一步必须输出创建计划和 diff preview。
 - 若用户已明确要求建立 Topic，且标题、范围、目录名、仪表盘行无歧义，可在同轮执行 `--write`。
 - 写入成功后追加一条 `platform-ops/log.md` 操作日志。

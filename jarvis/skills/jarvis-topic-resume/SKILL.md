@@ -41,7 +41,7 @@ write_level:
 
 confirmation_rules:
 - 模糊匹配或多候选时先确认。
-- 恢复后追加当前会话到快照的"关联会话"表（记录性写入：工具、会话标识、JSONL路径、日期）。
+- 恢复后追加当前会话到快照的"关联会话"表。当前会话 JSONL：`locate_session_jsonl.py --tool claude-code --latest`。
 - 不更新快照的"最后动作/下一步/未解决问题"，不写讨论记录。
 
 fallback_rules:
