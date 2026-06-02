@@ -17,8 +17,11 @@ JARVIS_YAML="${PWD}/jarvis.yaml"
 
 # Save current session ID for locate_session_jsonl.py --session-id
 mkdir -p "${HOME}/.jarvis"
-HOOK_INPUT=$(cat)
-SESSION_ID=$(echo "$HOOK_INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('session_id',''))" 2>/dev/null || echo "")
+# Save session ID — try multiple sources
+# Source 1: environment variables
+SESSION_ID="${CLAUDE_SESSION_ID:-${CODE_SESSION_ID:-}}"
+# Source 2: most recent transcript filename
+[ -z "$SESSION_ID" ] && SESSION_ID=$(ls -t "${HOME}/.claude/transcripts/ses_"*.jsonl 2>/dev/null | head -1 | xargs basename | sed 's/ses_//;s/\.jsonl//')
 [ -n "$SESSION_ID" ] && echo "$SESSION_ID" > "${HOME}/.jarvis/current-session"
 
 escape_for_json() {
