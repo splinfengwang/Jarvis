@@ -17,11 +17,10 @@ JARVIS_YAML="${PWD}/jarvis.yaml"
 
 # Save current session ID for locate_session_jsonl.py --session-id
 mkdir -p "${HOME}/.jarvis"
-# Save session ID — try multiple sources
-# Source 1: environment variables
-SESSION_ID="${CLAUDE_SESSION_ID:-${CODE_SESSION_ID:-}}"
-# Source 2: most recent transcript filename
-[ -z "$SESSION_ID" ] && SESSION_ID=$(ls -t "${HOME}/.claude/transcripts/ses_"*.jsonl 2>/dev/null | head -1 | xargs basename | sed 's/ses_//;s/\.jsonl//')
+# 获取当前会话 ID — SessionStart 时最新 transcript 就是当前会话
+SESSION_ID=$(ls -t "${HOME}/.claude/transcripts/ses_"*.jsonl 2>/dev/null | head -1 | xargs basename | sed 's/ses_//;s/\.jsonl//')
+# 兜底: 环境变量（极少情况）
+[ -z "$SESSION_ID" ] && SESSION_ID="${CLAUDE_SESSION_ID:-${CODE_SESSION_ID:-}}"
 [ -n "$SESSION_ID" ] && echo "$SESSION_ID" > "${HOME}/.jarvis/current-session"
 
 escape_for_json() {
