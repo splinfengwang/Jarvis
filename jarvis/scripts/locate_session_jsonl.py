@@ -60,11 +60,16 @@ def main() -> int:
         files.extend(root.rglob("*.jsonl"))
 
     if args.session_id:
-        # Exact match by session ID in filename: ses_<id>.jsonl
-        matched = [p for p in files if args.session_id in p.name]
+        sid = args.session_id
+        # Exact match
+        matched = [p for p in files if sid in p.name]
         if not matched:
-            # Try searching file content for session_id as fallback
-            matched = [p for p in files if contains_cwd(p, args.session_id)]
+            # Strip non-alphanumeric (UUID dashes, prefixes) and match hex core
+            clean = ''.join(c for c in sid if c.isalnum())
+            matched = [p for p in files if clean and clean in p.name.replace('ses_', '').replace('.jsonl', '')]
+        if not matched:
+            # Search file content as last resort
+            matched = [p for p in files if contains_cwd(p, sid)]
     elif args.latest:
         files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
         matched = files[:1]
