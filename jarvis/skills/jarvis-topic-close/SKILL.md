@@ -54,7 +54,7 @@ write_level:
 confirmation_rules:
 > ⚠️ 关闭后必须 git commit（含知识库变更）。未经 commit 的关闭不完整。
 - 关闭只同步状态，不自动萃取、不自动入库。
-- 关闭前必须处理最终关联会话：① 扫描中间会话：`--tool claude-code --cwd <项目路径> --date <上次记录日期>` 找到遗漏的中间会话 → 补入关联会话表。② 当前会话：`cat ~/.jarvis/current-session` 获取 id → `--session-id <id>` 追加。
+- 关闭前必须处理最终关联会话：① 扫描中间会话：`--tool claude-code --cwd <项目路径> --date <上次记录日期>` 找到遗漏的中间会话 → 补入关联会话表。② 当前会话：`cat ~/.jarvis/current-session` 获取 id → `--session-id <id>` 追加。 失败 → 用当前会话的首条消息或 Topic 名称搜索 ~/.claude/transcripts/ 文件内容。仍失败 → 待确认
 - 关闭时同步 `索引.md` 的 Next Action、关键产出和时间线。
 - 写入完成后立即 git commit（在 memcommit 之前）：`git add` Topic 目录 + 仪表盘 + log + 知识库变更 → `git commit -m "✅ 关闭: <Topic>"`。未经 commit 的关闭不完整。
 - 追加 `platform-ops/log.md` 操作日志。

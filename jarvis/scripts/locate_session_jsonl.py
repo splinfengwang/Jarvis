@@ -50,6 +50,7 @@ def main() -> int:
     parser.add_argument("--home", default=str(Path.home()))
     parser.add_argument("--latest", action="store_true", help="Return the single most recent jsonl, ignoring all filters")
     parser.add_argument("--session-id", default="", help="Match by session ID (exact filename match: ses_<id>.jsonl)")
+    parser.add_argument("--search-content", default="", help="Search transcript content for this text (e.g. first message, topic name)")
     args = parser.parse_args()
 
     home = Path(args.home).expanduser().resolve()
@@ -59,7 +60,10 @@ def main() -> int:
             continue
         files.extend(root.rglob("*.jsonl"))
 
-    if args.session_id:
+    if args.search_content:
+        # Search transcript content for a specific phrase
+        matched = [p for p in files if contains_cwd(p, args.search_content)]
+    elif args.session_id:
         sid = args.session_id
         # Exact match
         matched = [p for p in files if sid in p.name]

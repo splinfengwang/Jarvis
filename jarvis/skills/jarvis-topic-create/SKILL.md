@@ -48,7 +48,7 @@ write_level:
 
 confirmation_rules:
 > ⚠️ 先 dry-run 预览，用户确认后才 --write。禁止跳过预览直接写入。
-- 创建前：读取 `~/.jarvis/current-session` 获取 session_id → `locate_session_jsonl.py --tool claude-code --session-id <id>`。失败 → `待确认`
+- 创建前：读取 `~/.jarvis/current-session` 获取 session_id → `locate_session_jsonl.py --tool claude-code --session-id <id>`。失败 → 用当前会话的首条消息或 Topic 名称搜索 `~/.claude/transcripts/` 文件内容。仍失败 → `待确认`
 - 第一步必须输出创建计划和 diff preview。
 - 若用户已明确要求建立 Topic，且标题、范围、目录名、仪表盘行无歧义，可在同轮执行 `--write`。
 - 写入成功后追加一条 `platform-ops/log.md` 操作日志。

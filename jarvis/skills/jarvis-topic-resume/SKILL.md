@@ -42,7 +42,7 @@ write_level:
 confirmation_rules:
 > ⚠️ 恢复后必须追加当前会话到关联会话表。不更新快照的"最后动作"等内容。
 - 模糊匹配或多候选时先确认。
-- 恢复后追加当前会话到快照的"关联会话"表。session_id 从 `~/.jarvis/current-session` 读取 → `locate_session_jsonl.py --tool claude-code --session-id <id>`。
+- 恢复后追加当前会话到快照的"关联会话"表。session_id 从 `~/.jarvis/current-session` 读取 → `locate_session_jsonl.py --tool claude-code --session-id <id>`。 失败 → 用当前会话的首条消息或 Topic 名称搜索 ~/.claude/transcripts/ 文件内容。仍失败 → 待确认
 - 不更新快照的"最后动作/下一步/未解决问题"，不写讨论记录。
 
 fallback_rules:
