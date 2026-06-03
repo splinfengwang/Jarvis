@@ -61,6 +61,7 @@ confirmation_rules:
 - 追加 `platform-ops/log.md` 操作日志。
 - 调用 `memcommit_adapter.py --write --repo-root . --kind topic_freeze --topic <topic> --summary <摘要> --fact <事实> --decision <决策>` 写入 OpenViking 记忆。失败不阻塞。
 - 当前 Topic 不明确时先确认。
+- 全部步骤完成后，验证：`git status --porcelain -- <Topic目录> 仪表盘.md log.md`。仍有未提交变更 → 警告并重新 commit。
 
 fallback_rules:
 - 三位一体状态无法同步时停止，不做部分成功口头承诺。

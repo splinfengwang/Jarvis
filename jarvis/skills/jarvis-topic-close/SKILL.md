@@ -60,6 +60,7 @@ confirmation_rules:
 - 追加 `platform-ops/log.md` 操作日志。
 - 关闭写入完成后，调用 `memcommit_adapter.py --write --repo-root . --kind topic_close --topic <topic> --summary <摘要> --fact <事实> --decision <决策>` 写入 OpenViking 记忆。`--write` 为必传标志，缺省为 dry-run 仅预览不写入。若 adapter 返回 `skipped_or_failed`，记录 `memory_commit: skipped_or_failed` 到日志，不阻塞本地 Topic 闭环。
 - 若要归档到 Done，需要林峰明确确认。
+- 全部步骤完成后，验证：`git status --porcelain -- <Topic目录> 仪表盘.md log.md`。仍有未提交变更 → 警告并重新 commit。
 
 fallback_rules:
 - 无法定位 current Topic 时先确认。
