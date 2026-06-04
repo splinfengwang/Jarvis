@@ -25,6 +25,9 @@
 | "这条先别用" | `jarvis-knowledge-feedback` |
 | "这个分析存档" | `jarvis-analysis-thread` |
 | "初始化 Jarvis" | `jarvis-init` |
+| "建个目录叫 X""以后X都放这里" | `jarvis-catalog-register` |
+| "多角度看一下 / 圆桌 / roundtable" | `jarvis-roundtable` |
+| "新建一个审查角色 / 创建 persona" | `jarvis-persona-create` |
 | 以上都不匹配 | 先判断任务性质：单次问答→轻量模式。涉方案/设计/分析→新工作命题：wiki索引→仪表盘→判断建Topic |
 
 ---

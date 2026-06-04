@@ -46,6 +46,7 @@ write_level:
 confirmation_rules:
 - 不写文件，不更新 Topic，不入库。
 - 若下一步涉及写入，只推荐对应 skill，不代替执行。
+- 当前 Topic 讨论深入时（讨论记录 > 2000 字/含方案参数），提示可用 `jarvis-roundtable`。
 
 fallback_rules:
 - Router 字段无法填完整时，说明缺口并回退 `AGENT.md v3.4`。

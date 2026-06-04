@@ -26,6 +26,7 @@ outputs:
 - 最后动作。
 - 已确认事实、当前推论、待拍板。
 - 下一步建议。
+- 若讨论记录 > 2000 字且含方案/参数/设计讨论，推荐 `jarvis-roundtable` 多角色审查。
 
 required_references: []
 
