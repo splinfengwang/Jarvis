@@ -74,4 +74,36 @@ if echo "$FILE_PATH" | grep -qE '(^|/)术语/'; then
     exit 0
 fi
 
+# ── catalog gate: new file into writable catalog → ask ──
+if [ "$TOOL_NAME" = "Write" ]; then
+    JARVIS_YAML="${CLAUDE_PROJECT_DIR:-$PWD}/jarvis.yaml"
+    if [ -f "$JARVIS_YAML" ]; then
+        CATALOG_MATCH=$(python3 -c "
+import sys, re
+yaml = open('$JARVIS_YAML').read()
+# Only match names under catalogs: section
+cs = yaml.find('catalogs:')
+if cs >= 0:
+    tail = yaml[cs:]
+    end = len(tail)
+    for m in re.finditer(r'^[a-zA-Z]', tail[10:], re.MULTILINE):
+        end = m.start() + 10; break
+    cy = tail[:end]
+    names = re.findall(r'^  ([\\u4e00-\\u9fa5\\w-]+):', cy, re.MULTILINE)
+    names = [n for n in names if n not in ('writable', 'description', 'catalogs')]
+else:
+    names = []
+file = '$FILE_PATH'.replace('\$CLAUDE_PROJECT_DIR/', '').replace('\$PWD/', '')
+for name in names:
+    if file.startswith(name + '/') or file == name:
+        print(name)
+        sys.exit(0)
+" 2>/dev/null || echo "")
+        if [ -n "$CATALOG_MATCH" ]; then
+            printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"[Jarvis Guard] catalog-write: 新建文件到 %s/ 目录。请确认该内容已在活跃 Topic 中讨论并确认过。"}}\n' "$CATALOG_MATCH"
+            exit 0
+        fi
+    fi
+fi
+
 exit 0
