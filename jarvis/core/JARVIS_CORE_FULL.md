@@ -1,9 +1,10 @@
 # JARVIS_CORE.md
 
-> 版本：v1.6.0
+> 版本：v1.8.0
 > 状态：production candidate
 > 基线来源：Jarvis Runtime v0.2 + KF580 剥离
 > 使用边界：本文件是 Jarvis 框架的核心行为规程。会话启动时通过 SessionStart hook 注入上下文。
+> 路由表同步：本表与 JARVIS_CORE_BRIEF.md 保持同步，BRIEF 为权威参考。
 
 ---
 
@@ -30,6 +31,11 @@
 | "这条先别用""这个知识先标存疑""应用中发现不对" | `jarvis-knowledge-feedback` |
 | "这个分析先存档""提案确认一下""这个方向废弃" | `jarvis-analysis-thread` |
 | "初始化 Jarvis""安装 Jarvis""帮我配置 Jarvis" | `jarvis-init`（仅安装/重装场景） |
+| "建个目录叫 X""以后 X 都放这里" | `jarvis-catalog-register` |
+| "多角度看一下""拉个会讨论""圆桌审查""roundtable" | `jarvis-roundtable` |
+| "新建一个审查角色""创建 persona" | `jarvis-persona-create` |
+| "整理一下 topic 文件""按规程整理""规整一下文件目录" | `jarvis-topic-organize`（旧 Topic 一次性迁移） |
+| "帮我写/出一个方案""设计一下XX""分析一下XX" | 新工作命题：① wiki索引 → ② 仪表盘 → ③ 建 Topic → ④ 方案初稿写入 Topic/讨论记录.md → ⑤ 与你讨论确认 → ⑥ 确认后才可将定稿转入业务/或产品/等目录。过程中产生的文件归入 Topic 的 `过程稿/ → 定稿/`，按 `YYYYMMDD-主题-文档类型.md` 命名（详见 topic-lifecycle.md） |
 | 以上都不匹配 | **先判断任务性质**：① 单次问答/闲聊 → 轻量模式：直接处理，不写入不创建 Topic。② 涉及新方案/新设计/新分析/需要理解项目结构才能开始 → 新工作命题模式：读 wiki 索引 → 读仪表盘 → 判断是否建 Topic → 按 §8 会话模式执行 |
 
 ### 技能冲突裁决

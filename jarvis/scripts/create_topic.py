@@ -47,7 +47,14 @@ tags: [topic]
 
 ## 核心文档索引
 
-- （待补充）
+### 定稿
+- （讨论确认后的最终产出，待补充）
+
+### 过程稿
+- （迭代中的中间版本，待补充）
+
+### 参考资料
+- （外部输入材料，待补充）
 
 ## 当前状态
 
@@ -181,6 +188,9 @@ def main() -> int:
         topic_dir / "_上下文快照.md": build_snapshot(args.title, args.status, args.scope, session_row),
         topic_dir / "_准入检查单.md": build_checklist(args.title, args.scope),
         topic_dir / "讨论记录.md": build_log(args.title, args.scope),
+        topic_dir / "参考资料/.gitkeep": "",
+        topic_dir / "过程稿/.gitkeep": "",
+        topic_dir / "定稿/.gitkeep": "",
     }
     row = (
         f"| {STATUS_DISPLAY[args.status]} | "

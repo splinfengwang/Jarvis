@@ -15,14 +15,6 @@ Jarvis 内置了 5 个审查角色（pm-analyst、design-reviewer、edge-case-hu
 - 一个 persona 只负责一个判断维度
 - `analysis_lens` 是具体的审查切入点，不是笼统的方向
 
-trigger:
-- "新建一个审查角色""定义一个审查员"
-- "创建 persona""create persona"
-- "我想要一个 X 视角的审查员"
-
-non_trigger:
-- 用户只是想了解有哪些 persona、或只是想看定义 → `jarvis-help`
-
 ## 流程
 
 ### Step 1: 确认角色名和审查目标
@@ -156,18 +148,12 @@ if not ok:
 - `content_write`：修改 `jarvis.yaml` 属于内容性写入，必须先提案、用户确认后执行
 
 ## confirmation_rules
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
 - 每步只确认 1-2 个决策点，不要一次塞所有字段
-- 如果用户说的已经足够具体（"我需要一个 GDPR 合规审查员，检查数据是否加密、用户同意是否完整、数据保留期是否合理"），直接从第 3 步开始，不需要从头引导
-- 预览 yaml 后再执行写入
+- 如果用户已经足够具体（如"需要 GDPR 合规审查员，检查数据是否加密…"），直接从第 3 步开始，不需要从头引导
 - 写入后读回验证
 
 ## fallback_rules
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
 - `jarvis.yaml` 不存在时停止
-- 用户中途说"先不做了"→ 停止，不写任何东西
 - 写入失败时告知原因
-
-## acceptance_cases
-- "帮我创建一个 GDPR 合规审查员" → 引导式对话，最终产出 yaml 并写入
-- "帮我建个审查员，检查方案完整性的"（太笼统）→ 追问具体维度再创建
-- "我想基于 pm-analyst 改一个" → 展示 pm-analyst 的完整 yaml，让用户指定修改哪些字段
-- 用户说只需要临时用一次 → 不持久化，当前会话中直接描述角色给 roundtable

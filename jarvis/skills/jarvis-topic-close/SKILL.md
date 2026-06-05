@@ -7,16 +7,6 @@ next_skills:
 
 # jarvis-topic-close
 
-trigger:
-- “这个 Topic 收一下”
-- “这个话题结束”
-- “关闭这个 Topic”
-
-non_trigger:
-- “先存一下”或临时暂停。
-- “萃取一下”或“入库”。
-- 用户明确禁止写入。
-
 inputs:
 - 当前 Topic。
 - 关闭理由。
@@ -52,22 +42,13 @@ write_level:
 - record_write
 
 confirmation_rules:
-> ⚠️ 关闭后必须 git commit（含知识库变更）。未经 commit 的关闭不完整。
-- 关闭只同步状态，不自动萃取、不自动入库。
-- 关闭前必须处理最终关联会话：① 扫描中间会话：`--tool claude-code --cwd <项目路径> --date <上次记录日期>` 找到遗漏的中间会话 → 补入关联会话表。② 当前会话：`cat ~/.jarvis/current-session` 获取 id → `--session-id <id>` 追加。 失败 → 用当前会话的首条消息或 Topic 名称搜索 ~/.claude/transcripts/ 文件内容。仍失败 → 待确认
-- 关闭时同步 `索引.md` 的 Next Action、关键产出和时间线。
-- 写入完成后立即 git commit（在 memcommit 之前）：`git add` Topic 目录 + 仪表盘 + log + 知识库变更 → `git commit -m "✅ 关闭: <Topic>"`。未经 commit 的关闭不完整。
-- 追加 `platform-ops/log.md` 操作日志。
-- 关闭写入完成后，调用 `memcommit_adapter.py --write --repo-root . --kind topic_close --topic <topic> --summary <摘要> --fact <事实> --decision <决策>` 写入 OpenViking 记忆。`--write` 为必传标志，缺省为 dry-run 仅预览不写入。若 adapter 返回 `skipped_or_failed`，记录 `memory_commit: skipped_or_failed` 到日志，不阻塞本地 Topic 闭环。
-- 若要归档到 Done，需要林峰明确确认。
-- 全部步骤完成后，验证：`git status --porcelain -- <Topic目录> 仪表盘.md log.md`。仍有未提交变更 → 警告并重新 commit。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 关闭前必须处理最终关联会话：扫描中间会话 + 当前会话追加
+- 关闭时同步 索引.md 的 Next Action、关键产出和时间线
+- 调用 memcommit_adapter.py --write 写入 OpenViking 记忆
+- 全部步骤完成后，验证 git status --porcelain，仍有未提交变更 → 警告并重新 commit
 
 fallback_rules:
-- 无法定位 current Topic 时先确认。
-- 仪表盘或索引同步失败时停止。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 仪表盘或索引同步失败时停止
 
-acceptance_cases:
-- “这个 Topic 收一下” -> 状态为 `pending_extraction`。
-- 最终会话进入 `_上下文快照.md` 的关联会话表。
-- 不生成知识库条目。
-- 待萃取内容只列清单。

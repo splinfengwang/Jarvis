@@ -6,15 +6,6 @@ next_skills: []
 
 # jarvis-topic-create
 
-trigger:
-- “先建立 Topic：...”
-- “开一个 Topic”
-- “这个单独建个话题”
-
-non_trigger:
-- 用户明确说只讨论、不要写入、不要建档。
-- 单次轻量问答。
-
 inputs:
 - Topic 标题。
 - 一句话范围说明。
@@ -24,16 +15,25 @@ inputs:
 
 outputs:
 - 创建计划。
-- 四个 Topic 文件预览。
+- 四个 Topic 文件预览 + 三个标准子目录（`参考资料/`、`过程稿/`、`定稿/`）。
 - 仪表盘追加行预览。
 - `_上下文快照.md` 的关联会话行。
 - validation result。
 
+## 产出规范
+
+Topic 创建后，讨论过程中产生的文件必须遵循 `jarvis/references/topic-lifecycle.md` 的目录和命名规范：
+- **过程稿/**：迭代中间版本，`YYYYMMDD-主题-文档类型-vN.M.md`
+- **定稿/**：用户确认的最终产出，`YYYYMMDD-主题-文档类型.md`
+- **参考资料/**：外部输入材料（PDF/PPT/图片等），保持原名
+- 根目录仅保留四件套骨架文件和元数据（`_萃取清单.md` 等）
+- 二级子目录无例外，文件名同样必须带日期和主题前缀
+
 required_references:
 - `jarvis/references/write-permission.md`
+- `jarvis/references/topic-lifecycle.md`
 
 on_demand_references:
-- `jarvis/references/topic-lifecycle.md`
 - `jarvis/references/session-locating.md`
 
 allowed_scripts:
@@ -47,20 +47,9 @@ write_level:
 - script default remains dry-run
 
 confirmation_rules:
-> ⚠️ 先 dry-run 预览，用户确认后才 --write。禁止跳过预览直接写入。
-- 创建前：读取 `~/.jarvis/current-session` 获取 session_id → `locate_session_jsonl.py --tool claude-code --session-id <id>`。失败 → 用当前会话的首条消息或 Topic 名称搜索 `~/.claude/transcripts/` 文件内容。仍失败 → `待确认`
-- 第一步必须输出创建计划和 diff preview。
-- 若用户已明确要求建立 Topic，且标题、范围、目录名、仪表盘行无歧义，可在同轮执行 `--write`。
-- 写入成功后追加一条 `platform-ops/log.md` 操作日志。
-- 若用户只是讨论是否建立、或输入含糊，则停在 dry-run 等确认。
-- 不修改 `AGENT.md`。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 创建前：读取 ~/.jarvis/current-session 获取 session_id → locate_session_jsonl
 
 fallback_rules:
-- 仪表盘缺失、同名 Topic 已存在或表格无法定位时停止。
-- 脚本失败时不得手工整页重写仪表盘。
-
-acceptance_cases:
-- “先建立 Topic：测试替换验收” -> dry-run 生成四文件、仪表盘行和关联会话行。
-- `--write` 后四文件存在，仪表盘行格式正确。
-- JSONL 未定位 -> 关联会话表仍有工具、工作区、日期，JSONL 字段为 `待确认 — tool=…, session=…, date=…, cwd=…`。
-- “不要动原文件，只给方案” -> 不触发。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- （本 skill 无特有规则，全部由 CORE 覆盖）

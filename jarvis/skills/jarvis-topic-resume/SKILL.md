@@ -6,15 +6,6 @@ next_skills: []
 
 # jarvis-topic-resume
 
-trigger:
-- “继续 <Topic>”
-- “恢复 <Topic>”
-- “接着上次”
-
-non_trigger:
-- 明确创建新 Topic。
-- 明确关闭、冻结或萃取。
-
 inputs:
 - Topic 名称或关键词。
 - `platform-ops/仪表盘.md`。
@@ -41,21 +32,15 @@ write_level:
 - record_write
 
 confirmation_rules:
-> ⚠️ 恢复后必须追加当前会话到关联会话表。不更新快照的"最后动作"等内容。
-- 模糊匹配或多候选时先确认。
-- 恢复后追加当前会话到快照的"关联会话"表。session_id 从 `~/.jarvis/current-session` 读取 → `locate_session_jsonl.py --tool claude-code --session-id <id>`。 失败 → 用当前会话的首条消息或 Topic 名称搜索 ~/.claude/transcripts/ 文件内容。仍失败 → 待确认
-- 不更新快照的"最后动作/下一步/未解决问题"，不写讨论记录。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 恢复后追加当前会话到快照的关联会话表。session_id 从 ~/.jarvis/current-session 读取 → locate
+- 不更新快照的最后动作/下一步/未解决问题，不写讨论记录
 
 fallback_rules:
-- 找不到 Topic 时，按 `jarvis-status` 列候选。
-- 快照缺失时停止并说明需要补上下文。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 找不到 Topic 时，按 jarvis-status 列候选
 
 #### 恢复后自检
 
 Topic 恢复完成、用户开始新一轮讨论后，判断：本次讨论是否产生了新的工作命题？是 → 提议建 Topic（走 `jarvis-topic-create`）。不是 → 继续当前 Topic。
-
-acceptance_cases:
-- “继续贾维斯运行时架构” -> 读仪表盘、索引、快照并输出恢复摘要。
-- “继续上次那个” -> 多候选时询问。
-- 快照缺失 -> 不编造最后动作。
 

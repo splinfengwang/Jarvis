@@ -6,16 +6,6 @@ next_skills: []
 
 # jarvis-knowledge-feedback
 
-trigger:
-- “这条先别用”
-- “这条有冲突”
-- “应用中发现不对”
-- “这个知识先标存疑”
-
-non_trigger:
-- 用户只是查询知识内容。
-- 没有指向具体知识条目。
-
 inputs:
 - 知识条目路径或名称。
 - 反馈内容。
@@ -42,16 +32,10 @@ write_level:
 - content_write after confirmation
 
 confirmation_rules:
-> ⚠️ 涉及医学参数/安全边界的反馈 → 默认转存疑，不能直接确认。
-- 必须明确指向具体知识条目。
-- 若反馈涉及医学参数、安全边界或核心判断，默认转 `存疑` 或 `待确认`，并建议跟进事项。
-- 写入成功后追加一条 `platform-ops/log.md` 操作日志。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 必须明确指向具体知识条目
 
 fallback_rules:
-- 条目不明确时先列候选。
-- 用户只说“感觉不对”但没有具体条目时，不写入。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 条目不明确时先列候选
 
-acceptance_cases:
-- “这条先别用” -> 条目写入应用反馈，可改成 `存疑`。
-- “这个知识先标存疑” -> frontmatter 状态更新为 `存疑`。
-- 医学条目有冲突 -> 建议进入跟进事项。

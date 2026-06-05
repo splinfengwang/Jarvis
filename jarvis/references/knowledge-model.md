@@ -1,37 +1,15 @@
----
-name: jarvis-knowledge-model
-description: Jarvis 知识库的结构模型和规范。定义 L1-L4/F 五层知识分层、A/B/C 术语分类、术语生命周期、入账规则和载体规范。只读参考型 skill，不在运行时自动触发，由 knowledge-extract / knowledge-ingest / knowledge-feedback 按需引用。
----
+# 知识库模型
 
-# jarvis-knowledge-model
+> 参考文档。定义 L1-L4/F 五层知识分层、A/B/C 术语分类、术语生命周期、入账规则、目录职责规范。
+> 由 knowledge-extract / knowledge-ingest / knowledge-feedback 按需引用。
 
-## 触发
+## 读取时机
 
-本 skill 不在运行时自动触发。以下场景按需读取：
-
-- 执行 `jarvis-knowledge-extract`（需理解知识分层和证据类型）
-- 执行 `jarvis-knowledge-ingest`（需理解入库规则和载体规范）
-- 执行 `jarvis-knowledge-feedback`（需理解术语生命周期）
+以下场景按需读取：
+- 执行 jarvis-knowledge-extract（需理解知识分层和证据类型）
+- 执行 jarvis-knowledge-ingest（需理解入库规则和载体规范）
+- 执行 jarvis-knowledge-feedback（需理解术语生命周期）
 - 用户询问知识库结构或术语管理规则
-
-## 不触发
-
-- 普通对话、状态查询、Topic 操作
-- 文件处理（`jarvis-file-process` 已有自己的质量分级规则）
-
-## 输出
-
-- 知识模型的结构化说明（仅供 agent 内部理解，不输出给用户）
-
-## required_references
-
-- none
-
-## write_level
-
-- none
-
----
 
 ## 知识分层：L1-L4/F 五层模型
 
@@ -308,16 +286,49 @@ related: [[术语A]] [[术语B]] [[术语C]]
 | **消费者** | 审阅记录、问题追溯 |
 | **维护** | append-only，不修改历史行 |
 
-### platform-ops/topics/<Topic>/
+### platform-ops/topics/<Topic>/（根目录）
 
 | 维度 | 内容 |
 |------|------|
-| **存什么** | 四件套骨架 + 工作产出文件。骨架：索引.md / _上下文快照.md / _准入检查单.md / 讨论记录.md。工作产出：仅在 Topic 上下文中有意义的方案/文案/分析。有独立价值的 → 萃取时迁移到 `业务/` |
-| **命名** | 目录：`YYYYMMDD_主题简称`。骨架文件名固定。工作产出：`YYYY-MM-DD <描述>.md` |
-| **创建者** | 骨架：`jarvis-topic-create`。工作产出：Topic 讨论过程中 agent 手动创建 |
-| **消费者** | `jarvis-topic-resume`（恢复）、`jarvis-knowledge-extract`（萃取对话知识 + 第 0.5 步扫描工作产出文件做 E 组迁移建议） |
-| **维护** | 冻结/关闭时由对应 skill 更新。**萃取时必须扫描非骨架文件**：判断每个文件是否独立可复用 → 是 → E 组建议迁移到 `业务/` |
-| **归档** | Topic → ⚪Done 后，目录保留。文件不该被检索到的（参考素材/临时草稿）→ 不放入索引。工作产出已迁移 → 原位置可替换为重定向页 |
+| **存什么** | 四件套骨架文件（索引.md / _上下文快照.md / _准入检查单.md / 讨论记录.md）+ 元数据文件（_萃取清单.md / _evidence-pack.json 等）。**不存业务产出文件**。 |
+| **命名** | 目录：`YYYYMMDD_主题简称`。骨架和元数据文件名固定。 |
+| **创建者** | 骨架：`jarvis-topic-create`。元数据：各 skill 运行时写入。 |
+| **消费者** | `jarvis-topic-resume`（恢复上下文）、`jarvis-topic-freeze` / `jarvis-topic-close`（状态同步）、`jarvis-knowledge-extract`（读取 _萃取清单 等元数据）。 |
+| **维护** | 冻结/关闭时由对应 skill 更新快照和索引。萃取完成 → Topic ⚪Done 后目录保留。 |
+| **归档** | 不变更。 |
+
+### platform-ops/topics/<Topic>/定稿/
+
+| 维度 | 内容 |
+|------|------|
+| **存什么** | 讨论确认后具备独立价值的最终产出文档：方案终稿、设计说明、Roundtable 审查报告、分析报告等。萃取时的**首选扫描目录**。 |
+| **命名** | `<YYYYMMDD>-<主题>-<文档类型>.md`（如 `20260605-适老化改造-架构总览.md`）。不加 `_` 前缀。二级子目录无例外，萃取后脱离目录仍可独立理解。详见 [topic-lifecycle#文件命名规范](topic-lifecycle.md)。 |
+| **创建者** | Topic 讨论过程中用户确认后 agent 手动创建/移入。 |
+| **消费者** | `jarvis-knowledge-extract`（G 组首要候选来源）。`jarvis-topic-resume`（恢复时定位关键产出）。 |
+| **维护** | 文件确认定稿后移入此目录；旧的定稿版本若被取代则移入 `过程稿/`，此目录始终保持最新。 |
+| **归档** | 萃取后已迁移到 `业务/` 的文件 → 原文件改名 `_archived_原文件名.md`（不删，不修双链）。未迁移的文件保留。 |
+
+### platform-ops/topics/<Topic>/过程稿/
+
+| 维度 | 内容 |
+|------|------|
+| **存什么** | 讨论中产生的中间版本、被后续版本取代的旧版、废弃方案、讨论纪要草稿等。保留作为迭代审计记录。 |
+| **命名** | `<YYYYMMDD>-<主题>-<文档类型>-v<N.M>.md`（如 `20260608-用户积分体系-设计方案-v0.1.md`）。多子主题时按子主题建二级目录。详见 [topic-lifecycle#文件命名规范](topic-lifecycle.md)。 |
+| **创建者** | Topic 讨论过程中 agent 手动创建（初稿、迭代稿）。 |
+| **消费者** | `jarvis-topic-resume`（了解迭代历史）。`jarvis-knowledge-extract`：默认**跳过**，除非用户明确要求。 |
+| **维护** | 新版本产生后旧版本移入。废弃方向/方案移入。不需要清理——保留完整迭代痕迹。 |
+| **归档** | 不萃取。Topic ⚪Done 后随目录保留。 |
+
+### platform-ops/topics/<Topic>/参考资料/
+
+| 维度 | 内容 |
+|------|------|
+| **存什么** | 从外部进入 Topic 的原始材料：用户拖入的 PDF/PPT/Word/图片、网页爬取原文、截图等。**只读，agent 不应覆写**。 |
+| **命名** | 保持原始文件名或略加描述前缀。来源多时按类型建子目录。详见 [topic-lifecycle#文件命名规范](topic-lifecycle.md)。 |
+| **创建者** | 用户手动放置，或 Agent 在爬取/文件处理后放入。 |
+| **消费者** | `jarvis-knowledge-extract`（仅作溯源引用，不入库）。讨论过程中按需读取作为上下文。 |
+| **维护** | 无需维护。纯静态参考。 |
+| **归档** | 不萃取。外部参考素材若具长期参考价值 → G 组建议归档到 `知识资产/`。 |
 
 ### 知识资产/
 

@@ -7,15 +7,6 @@ next_skills:
 
 # jarvis-file-process
 
-trigger:
-- “先把这份 OCR 结果落文档”
-- “把这份宣传页解析结果整理出来”
-- “先出一个可人工复核的文档”
-
-non_trigger:
-- 用户只要求口头总结，不要求落文档。
-- 用户已经明确要求直接做知识萃取。
-
 inputs:
 - 原始文件路径。
 - OCR / 文档解析结果。
@@ -46,17 +37,10 @@ write_level:
 - content_write after confirmation
 
 confirmation_rules:
-> ⚠️ F 层产物必须标记 source_files + quality（📝/🔍/🧠）frontmatter。不标记 = 无法区分来源。
-- 该 skill 的目标是“先落可复核文档”，不是直接知识入库。
-- 文档必须保留 `source_files`、`processed_in`、`evidence_level=OCR文档解析`、`quality`。
-- 写入成功后追加一条 `platform-ops/log.md` 操作日志。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- F 层产物必须标记 source_files + quality（📝/🔍/🧠）+ processed_in + evidence_level=OCR文档解析 等 frontmatter 字段。不标记 = 无法区分来源。
 
 fallback_rules:
-- 原始文件路径不存在时停止。
-- 没有 OCR / 文档解析内容时不落文档。
-- 不把 OCR 结果直接写进正式知识条目。
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 没有 OCR / 文档解析内容时不落文档
 
-acceptance_cases:
-- “把这份宣传页 OCR 结果整理出来” -> 生成 `业务/<域>/` 文档，供人工复核。
-- 关键数字待核对 -> 文档中保留人工复核检查项。
-- 后续其他 Topic 可通过 `wiki索引` 找到这份文档。

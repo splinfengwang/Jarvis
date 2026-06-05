@@ -9,15 +9,6 @@ description: 发起多角色并行审查 — 从 Topic 中提取上下文，spaw
 
 Roundtable 是 Jarvis 的多角色审查机制。与 BMAD 的 party mode（单一 LLM 扮演多角色）不同，Roundtable 利用 `task` 工具 spawn 真正的独立子 agent——每个带独立的上下文、独立的 persona 指令、独立分析后返回结构化结论。主 agent 收集所有结论后合成汇报。
 
-trigger:
-- "多角度看一下""多方视角审查"
-- "拉个会讨论一下""圆桌讨论"
-- "roundtable""review this topic from multiple angles"
-
-non_trigger:
-- 用户只想问一个问题、不涉及 Topic 审查
-- 用户明确说"用 PM 视角看就行"（单一 persona，不需要 roundtable）
-
 ## 流程
 
 ### Step 0: Gating — 触发前检查

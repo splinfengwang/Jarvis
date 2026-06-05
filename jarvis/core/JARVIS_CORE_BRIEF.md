@@ -8,28 +8,17 @@
 
 ## 入口路由
 
-目的不明确 → 追问一次。目的明确 → 按触发词路由：
+目的不明确 → 追问一次。目的明确 → 按触发词路由。
+
+各 skill 的触发词已在 description 中定义，系统自动匹配。以下仅列多步骤工作流和特殊路由：
 
 | 用户说了什么 | 走哪个 Skill / 模式 |
 |---|---|
-| "最近怎么样""当前进展" | `jarvis-status`（只读） |
-| "继续 XX""接着上次" | `jarvis-topic-resume` → 汇报三件事 |
-| "先存一下""暂停" | `jarvis-topic-freeze` → 三位一体同步 |
-| "这个收一下""关闭" | `jarvis-topic-close` → 待萃取 |
-| "开一个 Topic" | `jarvis-topic-create` → 确认→写入 |
-| "萃取一下 XX" | `jarvis-knowledge-extract` → 确认→ingest |
-| "记一下这个跟进" | `jarvis-followup-sync` |
-| "顺便说一句"/碎片 | `jarvis-fragment-triage` |
-| "查 Confluence" | `jarvis-confluence-read` |
-| "OCR 落文档" | `jarvis-file-process` |
-| "这条先别用" | `jarvis-knowledge-feedback` |
-| "这个分析存档" | `jarvis-analysis-thread` |
-| "初始化 Jarvis" | `jarvis-init` |
-| "建个目录叫 X""以后X都放这里" | `jarvis-catalog-register` |
-| "多角度看一下 / 圆桌 / roundtable" | `jarvis-roundtable` |
-| "新建一个审查角色 / 创建 persona" | `jarvis-persona-create` |
-| "帮我写/出一个方案""设计一下XX""分析一下XX" | 新工作命题：① wiki索引 → ② 仪表盘 → ③ 建 Topic → ④ 方案初稿写入 Topic/讨论记录.md → ⑤ 与你讨论确认 → ⑥ 确认后才可将定稿转入业务/或产品/等目录 |
+| "帮我写/出一个方案""设计一下XX""分析一下XX" | 新工作命题：① wiki索引 → ② 仪表盘 → ③ 建 Topic → ④ 方案初稿写入 Topic/讨论记录.md → ⑤ 与你讨论确认 → ⑥ 确认后才可将定稿转入业务/或产品/等目录。过程中产生的文件归入 Topic 的 `过程稿/ → 定稿/`，按 `YYYYMMDD-主题-文档类型.md` 命名（详见 topic-lifecycle.md） |
+| "整理一下topic文件 / 按规程整理 / 规整一下文件目录" | `jarvis-topic-organize` — 旧Topic一次性迁移。新Topic已含标准骨架无需调用 |
 | 以上都不匹配 | 先判断任务性质：单次问答→轻量模式。若涉及新方案/设计/分析，走上面那条（必须建Topic才能写业务目录） |
+
+> 其他 skill（status/freeze/close/create/extract/roundtable/persona-create 等）由系统根据 description 自动匹配，不再在此列出。
 
 ---
 
@@ -91,6 +80,25 @@ L4 — 声明"索引无覆盖→兜底"→ 全项目grep + ov find → 结果仅
 
 这条写入会改变未来 Agent 对业务/知识/规则的判断吗？会→提案确认。不会→可执行。不确定→升一级。
 向 catalogs 目录（业务/、产品/ 等）**新建文件**时：必须当前有活跃 Topic，且内容已在 Topic/讨论记录.md 中经你确认。直接往 catalogs 写新文件 = 违规。
+
+### 写入分级
+
+| 级别 | 包含动作 | 权限 |
+|------|------|------|
+| `record_write` | 创建 Topic 骨架、更新快照、追加讨论记录、状态同步、操作日志、仪表盘更新 | 可自主执行，事后告知 |
+| `content_write` | 修改分析文档、方案提案、知识条目正文、业务判断、文件移动/重命名 | 先 dry-run 预览，用户确认后执行 |
+| `high_risk` | 修改 CORE 文件、删除文件/目录、重写核心业务文档、批量迁移结构 | 严格审批，先解释影响再执行 |
+
+只要写入会改变未来 Agent 对业务/知识/规则的判断 → 就不是 `record_write`。
+
+## 通用回退规则
+
+以下规则适用于所有 skill，CORE 已覆盖则 skill 不再单独定义：
+
+- 仪表盘缺失 → 停止，告知用户先初始化
+- 同名 Topic / 文件冲突 → 停止
+- 脚本执行失败 → 保留现场，不手工重写
+- `jarvis.yaml` 缺失 → 告知用户先执行 `jarvis init`
 
 ---
 

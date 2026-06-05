@@ -6,18 +6,6 @@ next_skills: []
 
 # jarvis-init
 
-## 触发
-
-- "初始化 Jarvis" / "在这个项目装 Jarvis" / "安装 Jarvis"
-- "jarvis init" / "setup jarvis"
-- "帮我配置 Jarvis"
-- "启用 Jarvis 行为框架"
-
-## 不触发
-
-- 用户只是在讨论或询问 Jarvis 的功能（不是要安装）
-- 项目已安装 Jarvis 且用户没有明确说要重新初始化
-
 ## 输入
 
 - 当前项目根目录
@@ -156,23 +144,13 @@ next_skills: []
   - "继续上次" → 恢复暂停的 Topic
 
 ## 确认规则
-
-1. **阶段 1-2 必须逐阶段确认**：探测结果汇报后等用户确认，角色协商后等用户确认
-2. **阶段 3-4-5 可连续执行**：确认后不需要中间确认
-3. 追加引用到已有 CLAUDE.md 前，**必须**展示引用内容并确认
-4. 替换 CLAUDE.md 前，**必须**备份为 `.bak` 并告知备份路径
-5. 已安装 Jarvis 的项目，**必须**先确认要重新初始化
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
+- 阶段 3-4-5 可在阶段 2 确认后连续执行
 
 ## Fallback 规则
-
+（通用规则见 JARVIS_CORE §4/§6/§7。以下仅列本 skill 特有规则）
 - `jarvis` CLI 不在 PATH 中 → 检查 `pipx list` 或 `~/.local/bin/jarvis`，给出安装指导
 - `jarvis init` 失败 → 读取错误输出，判断原因（权限/路径/Symlink），给出修复步骤
 - 项目目录不可写 → 报告权限问题，停止
 - `jarvis doctor` 有 error → 逐个分析原因，不直接重试已失败的操作
 
-## 验收用例
-
-1. 空项目中 `初始化 Jarvis` → 完整 5 阶段流程，jarvis doctor 全通过
-2. 有 CLAUDE.md（含角色定义）的项目中 `装 Jarvis` → 阶段 2 正确提取并汇报角色，追加引用不覆盖原内容
-3. 已安装 Jarvis 的项目中 `初始化 Jarvis` → 阶段 1 检测到已有安装，确认后重新初始化
-4. 用户说"先不要改我的 CLAUDE.md" → 阶段 2 跳过 CLAUDE.md，只做基础安装
