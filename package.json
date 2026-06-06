@@ -1,28 +1,33 @@
 {
-  "name": "jarvis",
-  "version": "1.5.0",
-  "description": "Jarvis — An LLM-native agent framework for long-term work assistance. Provides Core behavior protocols, skill packs, hooks engine, and knowledge base management.",
-  "main": "install.sh",
+  "name": "jarvis-agent",
+  "version": "1.10.0",
+  "description": "Jarvis — LLM 长期工作助手框架。提供 Core 行为规程、Skill 包、Hook 引擎和知识库管理。",
   "bin": {
-    "jarvis": "./scripts/jarvis_cli.py"
+    "jarvis": "./jarvis/cli.py"
   },
   "files": [
-    "core/",
-    "references/",
-    "skills/",
-    "scripts/",
-    "hooks/",
-    "templates/",
-    "plugins/",
-    "backends/",
-    "install.sh",
-    "CLAUDE.md"
+    "jarvis/",
+    ".claude-plugin/",
+    "setup.py",
+    "postinstall.js"
   ],
-  "keywords": ["agent", "llm", "claude-code", "knowledge-base", "topic-management"],
+  "scripts": {
+    "prepack": "node scripts/prepack.js",
+    "postinstall": "node postinstall.js"
+  },
+  "keywords": [
+    "claude-code",
+    "agent",
+    "llm",
+    "knowledge-base",
+    "topic-management",
+    "skill",
+    "hook"
+  ],
   "author": "Lin Feng",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/splinfengwang/Jarvis.git"
   }
 }

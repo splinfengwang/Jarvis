@@ -1,0 +1,28 @@
+# Jarvis .npmignore — 排除构建产物、隐私文件和开发工具
+# npm 会同时读取 .gitignore 和 .npmignore；.npmignore 优先级更高
+
+__pycache__/
+*.pyc
+*.pyo
+
+# 隐私/本地数据
+.codegraph/
+.reasonix/
+*.egg-info/
+
+# 构建产物
+build/
+dist/
+
+# 开发工具
+tests/
+tools/
+node_modules/
+
+# 敏感文件
+.env
+.env.*
+
+# 系统文件
+.DS_Store
+.venv/

@@ -77,29 +77,44 @@ Topic 关闭时，agent 不是把聊天记录存起来——而是：
 
 ## 快速开始
 
+### 在线安装
+
 ```bash
-# 1. 克隆
-git clone https://github.com/splinfengwang/Jarvis.git
-cd Jarvis
+# 方式 A: npm（推荐）
+npm install -g jarvis-agent
 
-# 2. 安装（选一种）
+# 方式 B: pip（备选）
+pip install -e .
+# 或: pip install --break-system-packages -e .  (macOS homebrew Python)
 
-# 方式 A: pipx（推荐，macOS homebrew Python 用户首选）
-brew install pipx && pipx ensurepath
-pipx install -e .
-
-# 方式 B: venv（需要每次激活）
-python3 -m venv .venv && source .venv/bin/activate && pip install -e .
-
-# 方式 C: 系统 pip（需要 --break-system-packages）
-pip3 install --break-system-packages -e .
-
-# 3. 初始化项目
+# 初始化项目
 jarvis init ~/my-project
 cd ~/my-project
 
-# 4. 启动 Claude Code → Core 自动注入
+# 启动 Claude Code → Core 自动注入
 claude
+```
+
+### 离线安装
+
+```bash
+# 在有网机器上先下载或打包
+npm pack jarvis-agent                  # 在线: 从 registry 下载
+# 或
+tar -xzf jarvis-agent-x.y.z.tgz        # 离线: 解压已传输的包
+
+# 目标机器上
+npm install -g ./jarvis-agent-x.y.z.tgz
+jarvis init ~/my-project
+```
+
+### 手动安装（从源码）
+
+```bash
+git clone https://github.com/splinfengwang/Jarvis.git
+cd Jarvis
+pip install -e .
+jarvis init ~/my-project
 ```
 
 ### 初始化后的项目
@@ -120,21 +135,17 @@ my-project/
 ### 升级
 
 ```bash
-# editable install 直接 git pull 即可
-cd ~/path/to/jarvis
-git pull
+# npm
+npm update -g jarvis-agent
 
-# 不需要重跑 pipx install 或 jarvis init
-# 软链接 + editable install 会跟随源码自动更新
+# 已有项目同步到最新版本
+jarvis init --sync ~/my-project
 ```
 
 ### 安装检查
 
 ```bash
 jarvis doctor ~/my-project
-# 16 项检查：
-#   [OK] jarvis.yaml
-#   [OK] CLAUDE.md
 #   [OK] core/JARVIS_CORE_BRIEF.md
 #   [OK] .claude/skills/ (16 skills)
 #   [OK] .claude/hooks/ (3 hooks)
@@ -150,7 +161,7 @@ jarvis doctor ~/my-project
 | 能力 | 说明 |
 |---|---|
 | **双层 Core** | Brief 版 88 行（Agent 每次必读）+ Full 版 575 行（按需查阅） |
-| **16 个 Skill** | Topic 生命周期、知识萃取/入库/反馈、碎片分流、跟进同步、文件处理、Confluence 读取、知识库模型 |
+| **19 个 Skill** | Topic 生命周期、知识萃取/入库/反馈、碎片分流、跟进同步、文件处理、Confluence 读取、Catalog 注册、Persona 创建、圆桌审查 |
 | **3 个 Hook** | SessionStart（注入规程）、PreToolUse（写守卫）、PreCompact（状态保存） |
 | **wiki索引 + 术语索引** | 知识库双索引体系。Agent 查知识先走索引，不走全文 grep |
 | **L1-L4/F 五层知识** | 术语 → 关系 → 判断 → 待验证 → 文件产物。层层可检索 |

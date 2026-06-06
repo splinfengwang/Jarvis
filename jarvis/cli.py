@@ -4,17 +4,21 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 
-try:
-    from jarvis import __version__ as JARVIS_VERSION
-except ImportError:
-    JARVIS_VERSION = "1.5.0"  # fallback for bootstrap / non-installed context
+# Ensure jarvis package is importable (needed for npm global install)
+_parent = str(Path(__file__).resolve().parent.parent)
+if _parent not in sys.path:
+    sys.path.insert(0, _parent)
+
+from jarvis import __version__ as JARVIS_VERSION
 
 
 def now_date() -> str:
@@ -51,6 +55,9 @@ def cmd_init(args: argparse.Namespace) -> int:
     """Initialize a new Jarvis project."""
     target = Path(args.target).resolve()
     jarvis_home = find_jarvis_home()
+
+    if args.sync:
+        return _sync_project(target)
 
     print(f"Jarvis v{JARVIS_VERSION} — init")
     print(f"  Target: {target}")
@@ -181,6 +188,121 @@ backend: file
     return 0
 
 
+def _sync_project(target: Path) -> int:
+    """Sync an existing project: update jarvis.yaml version + clean project-level hooks."""
+    yaml_available = True
+    try:
+        import yaml
+    except ImportError:
+        yaml_available = False
+
+    config_path = target / "jarvis.yaml"
+    if not config_path.is_file():
+        print(f"[ERROR] jarvis.yaml not found in {target} — run 'jarvis init' first")
+        return 1
+
+    # Read jarvis.yaml
+    if yaml_available:
+        try:
+            with open(config_path, encoding='utf-8') as f:
+                config = yaml.safe_load(f) or {}
+        except Exception:
+            config = {}
+    else:
+        # Fallback: simple line-based parser
+        config = {}
+        with open(config_path, encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if ':' in line and not line.startswith('#'):
+                    k, v = line.split(':', 1)
+                    config[k.strip().strip('"').strip("'")] = v.strip().strip('"').strip("'")
+
+    proj_version = config.get('jarvis_version', 'unknown')
+    print(f"Jarvis v{JARVIS_VERSION} — sync")
+    print(f"  Target: {target}")
+    print(f"  Installed: v{JARVIS_VERSION}")
+    print(f"  Project:   v{proj_version}")
+    print()
+
+    changed = False
+
+    # Sync version in jarvis.yaml
+    if proj_version != JARVIS_VERSION:
+        raw = config_path.read_text(encoding='utf-8')
+        raw = re.sub(
+            r'jarvis_version:\s*"[^"]*"',
+            f'jarvis_version: "{JARVIS_VERSION}"',
+            raw
+        )
+        config_path.write_text(raw, encoding='utf-8')
+        print(f"  [sync] jarvis.yaml: v{proj_version} → v{JARVIS_VERSION}")
+        changed = True
+    else:
+        print(f"  [ok]   jarvis.yaml version is current")
+
+    # Clean project-level Jarvis hooks
+    settings_path = target / ".claude" / "settings.json"
+    if settings_path.is_file():
+        cleaned = _clean_project_settings(settings_path)
+        if cleaned:
+            print(f"  [sync] .claude/settings.json: removed Jarvis hooks (global hooks now handle this)")
+            changed = True
+        else:
+            print(f"  [ok]   .claude/settings.json: no Jarvis hooks to clean")
+    else:
+        print(f"  [skip] .claude/settings.json not found")
+
+    print()
+    if changed:
+        print(f"Done. Project synced to v{JARVIS_VERSION}.")
+    else:
+        print("Project already up to date.")
+    return 0
+
+
+def _clean_project_settings(settings_path: Path) -> bool:
+    """Remove Jarvis hooks from project .claude/settings.json. Returns True if changed."""
+    try:
+        settings = json.loads(settings_path.read_text(encoding='utf-8'))
+    except Exception:
+        return False
+
+    changed = False
+    hooks = settings.get('hooks', {})
+    for event in list(hooks.keys()):
+        matcher_entries = hooks[event]
+        kept_entries = []
+        for entry in matcher_entries:
+            inner_hooks = entry.get('hooks', [])
+            cleaned = [h for h in inner_hooks if not _is_jarvis_hook(h)]
+            if cleaned:
+                entry['hooks'] = cleaned
+                kept_entries.append(entry)
+        if kept_entries:
+            hooks[event] = kept_entries
+        else:
+            del hooks[event]
+            changed = True
+
+    if not hooks:
+        if 'hooks' in settings:
+            del settings['hooks']
+            changed = True
+
+    if changed:
+        settings_path.write_text(json.dumps(settings, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+    return changed
+
+
+def _is_jarvis_hook(hook: dict) -> bool:
+    """Check if a hook entry is Jarvis-managed."""
+    cmd = hook.get('command', '')
+    return 'jarvis-' in cmd
+
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     """Verify Jarvis installation integrity."""
     target = Path(args.target or ".").resolve()
@@ -206,6 +328,35 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         print(f"  [OK]   CLAUDE.md")
     else:
         warnings.append("CLAUDE.md not found")
+
+    # Check jarvis.yaml version vs installed version
+    if config.is_file():
+        try:
+            from jarvis.lib import load_jarvis_config
+            proj_config = load_jarvis_config(target)
+            proj_ver = proj_config.get('jarvis_version', '')
+            if proj_ver and proj_ver != JARVIS_VERSION:
+                warnings.append(f"jarvis.yaml version ({proj_ver}) differs from installed ({JARVIS_VERSION}). Run 'jarvis init --sync'.")
+        except Exception:
+            pass
+
+    # Check for residual Jarvis hooks in project settings.json
+    settings_path = target / ".claude" / "settings.json"
+    if settings_path.is_file():
+        try:
+            s = json.loads(settings_path.read_text(encoding='utf-8'))
+            has_jarvis = False
+            for event in s.get('hooks', {}).values():
+                for entry in event:
+                    for h in entry.get('hooks', []):
+                        if _is_jarvis_hook(h):
+                            has_jarvis = True
+                            break
+            if has_jarvis:
+                warnings.append("Project settings.json contains Jarvis hooks (may double-fire with global hooks). Run 'jarvis init --sync'.")
+        except Exception:
+            pass
+
 
     # Check Core
     core = jarvis_home / "core" / "JARVIS_CORE.md"
@@ -671,6 +822,7 @@ def main() -> int:
 
     init_p = sub.add_parser("init", help="Initialize a new Jarvis project")
     init_p.add_argument("target", nargs="?", default=".", help="Target project directory (default: current)")
+    init_p.add_argument("--sync", action="store_true", help="Sync existing project: update jarvis.yaml version + clean project-level jarvis hooks")
     init_p.add_argument("--claude-mode", choices=["a", "s", "r"], help="Scripted mode: append(a)/skip(s)/replace(r) — for agent-initiated init")
     init_p.set_defaults(func=cmd_init)
 

@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Jarvis — LLM-native agent framework."""
 
+from pathlib import Path
+import re
 from setuptools import setup, find_packages
+
+# Read version from __init__.py (single source of truth for Python side)
+_init = Path(__file__).parent / "jarvis" / "__init__.py"
+_version = re.search(r'__version__\s*=\s*"([^"]+)"', _init.read_text(encoding="utf-8")).group(1)
 
 setup(
     name="jarvis-agent",
-    version="1.5.0",
+    version=_version,
     description="Jarvis — An LLM-native agent framework for long-term work assistance.",
     author="Lin Feng",
     license="MIT",

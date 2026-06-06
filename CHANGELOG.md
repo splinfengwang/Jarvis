@@ -1,5 +1,38 @@
 # Changelog
 
+## v1.10.0 (2026-06-06)
+
+### 工程化
+- **版本号 SSOT**: `package.json` 为版本号单一真相源，`npm run prepack` 自动注入到 `.md`/`.py`/`.json` 文件
+- **废弃 install.sh**: 移除与 `jarvis init` 重复的 bash 初始化脚本，Python CLI 为唯一入口
+- **jarvis init --sync**: 新增项目同步模式，升级后自动更新 `jarvis.yaml` 版本号 + 清理项目级 hook 配置
+- **jarvis doctor 增强**: 新增版本不匹配检测和 hook 残留检测
+- **npm 离线安装**: 支持 `npm install -g ./jarvis-agent-x.y.z.tgz`，`postinstall.js` 自动全局注册 skill/hook
+- **postinstall.js 去重**: 重复安装自动跳过 hook 配置写入
+
+## v1.9.0 (2026-06-05)
+
+### 新增
+- **Persona + Roundtable 多角色审查系统**: 5 个内置审查角色（设计评审员、边缘案例猎手、医学安全审查员、需求分析员、技术/架构评审员）+ 并行审查 + 汇总
+- **Catalog 写入守卫**: hook 强制拦截非 catalog 目录的写入操作
+- **11 个 Skill 增加 confirmation_rules gate**
+
+### 改进
+- **Skill 规范优化**: 去冗余、description 触发匹配、CORE 承重
+
+## v1.8.0 (2026-06-03)
+
+### 新增
+- **知识萃取三步优化**: 快照时效检查 + 自动关联 + 交叉验证
+- **对照已有知识 6 种结果**: 互补 + 应关联双写
+- **萃取第 2 步新增外部来源结构化整理前置步骤**
+- **补齐检查重构**: 从独立表格改为内联到确认清单
+
+### 修复
+- **会话定位三层兜底**: ID 匹配 → 内容搜索 → 待确认
+- **JSONL 定位修复**: session-id 精确匹配 + 模糊匹配容错 + locate_session_jsonl 三个修复
+- **Topic 生命周期修复**: freeze/close/resume 全部补齐会话关联记录 + git commit 时序修正
+- **SessionStart hook**: ls -t 主路径，环境变量降为兜底
 
 ## v1.7.0 (2026-05-26)
 
