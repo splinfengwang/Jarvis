@@ -16,3 +16,4 @@ build/
 *.tgz
 outputs/
 projects/
+reasonix.toml
