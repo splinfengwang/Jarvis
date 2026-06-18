@@ -1,15 +1,17 @@
 {
   "name": "jarvis-agent",
-  "version": "1.10.0",
+  "version": "2.0.0",
   "description": "Jarvis — LLM 长期工作助手框架。提供 Core 行为规程、Skill 包、Hook 引擎和知识库管理。",
   "bin": {
     "jarvis": "./jarvis/cli.py"
   },
   "files": [
     "jarvis/",
+    "adapters/",
     ".claude-plugin/",
     "setup.py",
-    "postinstall.js"
+    "postinstall.js",
+    "UPGRADING-v2.md"
   ],
   "scripts": {
     "prepack": "node scripts/prepack.js",

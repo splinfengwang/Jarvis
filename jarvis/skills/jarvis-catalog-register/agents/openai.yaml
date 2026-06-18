@@ -1,0 +1,3 @@
+interface:
+  display_name: "目录注册"
+  short_description: "发现/创建内容目录 → 与用户确认用途和写入权限 → 注册到 jarvis.yaml。用于“建个目录叫 X”“以后 X 类内容都放这里”“把这个分析存到 ..."

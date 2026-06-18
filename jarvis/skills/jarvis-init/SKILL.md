@@ -1,6 +1,6 @@
 ---
 name: jarvis-init
-description: 在 Claude Code 会话中初始化 Jarvis 行为框架。引导式对话：探测项目类型 → 角色协商 → 执行安装 → 验证 → Onboarding。用于"初始化 Jarvis""在这个项目装 Jarvis""帮我配置 Jarvis"。
+description: 在项目中初始化 Jarvis 行为框架。支持 Claude Code、Reasonix、Codex 或同一项目三端通用。引导式对话：探测项目类型与目标平台 → 角色协商 → 执行初始化 → 验证 → Onboarding。用于"初始化 Jarvis""在这个项目装 Jarvis""帮我配置 Jarvis"。
 next_skills: []
 ---
 
@@ -10,14 +10,15 @@ next_skills: []
 
 - 当前项目根目录
 - `jarvis.yaml`（如果存在）
-- `CLAUDE.md`（如果存在）
+- `CLAUDE.md` / `AGENTS.md` / `REASONIX.md`（如果存在）
+- `reasonix.toml` / `.codex/` / `.claude/`（如果存在）
 - 项目结构（`.obsidian/`、`package.json`、`.git/` 等标志文件）
 - `jarvis` CLI 是否在 PATH 中
 
 ## 输出
 
 - 阶段 1-5 的完整引导对话
-- 初始化完成后的目录结构
+- 初始化完成后的目录结构与平台画像
 - `jarvis doctor` 验证结果
 - onboarding 建议（根据项目类型）
 
@@ -37,8 +38,9 @@ next_skills: []
 ## write_level
 
 - 创建目录/软链接/生成模板 → `record_write`（可自主执行）
-- 修改已有 CLAUDE.md → `content_write`（需先展示引用内容并确认）
+- 修改已有 CLAUDE.md / AGENTS.md → `content_write`（需先展示引用内容并确认）
 - 替换已有 CLAUDE.md → `content_write`（需确认 + 备份旧文件）
+- 新增/合并 `reasonix.toml` → `record_write`
 
 ## 引导流程（5 阶段）
 
@@ -54,11 +56,20 @@ next_skills: []
   - `.obsidian/` 存在 → Obsidian 知识库
   - `package.json` / `pyproject.toml` 存在 → 代码项目
   - `CLAUDE.md` 存在 → 已有 Claude Code 配置
+  - `AGENTS.md` 存在 → 已有通用 agent 入口
+  - `reasonix.toml` / `.reasonix/` / `REASONIX.md` 存在 → Reasonix 项目
+  - `.codex/` 存在 → Codex 项目
   - 以上都无 → 新项目
 
-1.3 向用户汇报探测结果，一次性说清楚：
+1.3 先判断平台画像：
+  - 只检测到一个平台 → 默认用该平台画像
+  - 检测到多个平台或没检测到 → 明确询问用户要 `claude` / `reasonix` / `codex` / `all`
+  - 如果用户核心诉求是“同一项目三端通用”，推荐 `all`
+
+1.4 向用户汇报探测结果，一次性说清楚：
   - 项目类型
-  - 已有配置（CLAUDE.md、jarvis.yaml）
+  - 平台画像（claude/reasonix/codex/all）
+  - 已有配置（CLAUDE.md、AGENTS.md、reasonix.toml、jarvis.yaml）
   - Jarvis 将添加什么（不替换什么）
 
 **必须**等待用户确认后再进入阶段 2。
@@ -67,7 +78,7 @@ next_skills: []
 
 **这是整个流程的核心差异点**——CLI 版的 `input()` 做不到的事。
 
-如果 CLAUDE.md 存在：
+如果平台画像包含 `claude` 且 CLAUDE.md 存在：
   2.1 读取 CLAUDE.md，搜索角色/身份相关关键词（"你是""身份""角色""SYSTEM_BOOT""agent""协议"）
   2.2 提取 1-3 行角色摘要
   2.3 向用户汇报，格式如下：
@@ -92,22 +103,31 @@ next_skills: []
 
   2.5 如果 CLAUDE.md 已有 Jarvis 引用 → 检测到并告知"已有引用，跳过"
 
-如果 CLAUDE.md 不存在：
-  - 告知用户"生成了一个基础 CLAUDE.md 模板，你可以在里面定义项目的角色和启动协议"
+如果平台画像包含 `claude` 且 CLAUDE.md 不存在：
+  - 告知用户"会生成一个基础 CLAUDE.md 模板，你可以在里面定义项目角色和启动协议"
+
+如果平台画像包含 `reasonix` / `codex`：
+  - 告知用户"会生成或补齐 AGENTS.md 作为通用 agent 入口"
+  - 如果包含 `reasonix`，再说明"会生成 `REASONIX.md` + 合并项目级 `reasonix.toml`，避免本地配置覆盖全局 Jarvis bridge"
 
 ### 阶段 3：执行初始化
 
 **先确认后执行。** 确认后下列步骤可**连续执行**，不需要逐步确认。
 
-3.1 运行 `jarvis init <项目路径>`（使用 `--claude-mode` 传递阶段 2 的选择）：
+3.1 运行 `jarvis init <项目路径> --platform <画像>`（使用 `--claude-mode` 传递阶段 2 的选择）：
   - `--claude-mode a` → 追加引用（默认）
   - `--claude-mode s` → 跳过
   - `--claude-mode r` → 替换+备份
-  - CLI 处理目录创建、软链接、模板生成、jarvis.yaml 写入
+  - `--platform claude|reasonix|codex|all`
+  - CLI 处理目录创建、软链接、模板生成、jarvis.yaml / AGENTS.md / REASONIX.md / reasonix.toml 写入
 
 3.2 如果 CLI 对 CLAUDE.md 追加了引用（阶段 2 默认选择），读回 CLAUDE.md 验证引用块已正确追加
+3.3 如果平台画像包含 `reasonix`，读回 `reasonix.toml` 验证：
+  - `system_prompt_file = "REASONIX.md"`
+  - `skills.paths` 已包含 Jarvis skills 路径
+3.4 读回 `REASONIX.md` / `AGENTS.md`，确认其中已嵌入 Jarvis Runtime Core block
 
-3.3 简要汇报每步结果
+3.5 简要汇报每步结果
 
 ### 阶段 4：验证
 
@@ -120,9 +140,11 @@ next_skills: []
 ### 阶段 5：Onboarding
 
 5.1 告知核心信息：
-  > **下次启动 Claude Code 时**，SessionStart hook 会自动注入 Core。
-  > 你会在会话开头看到 `[Jarvis Path Config]` 路径映射表，
-  > 这说明 Jarvis 已生效。
+  > **下次启动对应平台的新会话时**：
+  > - Claude Code 会通过 SessionStart hook 自动注入 Core
+  > - Reasonix 会通过 `reasonix.toml -> REASONIX.md` 直接拿到 Jarvis Core
+  > - Codex 会通过 `AGENTS.md` 先完成 bootstrap
+  > 看到 Jarvis 启动提示或 `[JARVIS_CORE]` / bootstrap 读取痕迹，说明 Jarvis 已生效。
 
 5.2 根据项目类型给出建议：
 
@@ -153,4 +175,3 @@ next_skills: []
 - `jarvis init` 失败 → 读取错误输出，判断原因（权限/路径/Symlink），给出修复步骤
 - 项目目录不可写 → 报告权限问题，停止
 - `jarvis doctor` 有 error → 逐个分析原因，不直接重试已失败的操作
-

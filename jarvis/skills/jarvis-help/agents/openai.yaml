@@ -1,0 +1,3 @@
+interface:
+  display_name: "帮助中心"
+  short_description: "Jarvis Runtime 的帮助、解释和模糊路由入口。用于“有哪些 Jarvis skill 可用”“为什么这样设计”“下一步可以做什么”“这个怎么用..."

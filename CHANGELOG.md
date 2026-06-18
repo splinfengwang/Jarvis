@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.0.0 (2026-06-18)
+
+### 三平台适配（Claude Code / Reasonix / Codex）
+- **适配器架构**: 新增 `adapters/` 目录，将平台相关代码从核心逻辑中分离
+  - `adapters/claude/` — Claude Code 适配器（含 hooks 和 install.sh）
+  - `adapters/reasonix/` — Reasonix 适配器（原生 `reasonix.toml` / prompt / skills 配置）
+  - `adapters/codex/` — Codex 适配器（`~/.codex/skills/` + `AGENTS.md` bootstrap）
+- **核心提取**: `jarvis-core-inject.sh` 从 519 行缩减至 123 行，inline Python 拆为独立模块
+  - `jarvis/core/plugin_resolver.py` — YAML 解析 + 插件注入 + 路径配置（平台无关）
+  - `jarvis/core/snapshot.py` — 知识快照生成：术语/wiki/仪表盘/Topic 扫描（平台无关）
+- **安装生命周期多平台化**
+  - `jarvis install --target {claude|reasonix|codex|all}` — 安装到指定平台
+  - `jarvis install --dry-run` — 预览安装操作
+  - `postinstall.js` 基于安装目录自动检测平台（`JARVIS_TARGET` 环境变量覆盖）
+- **Skill 元数据**: 19 个 skill 新增 `agents/openai.yaml`（Codex UI 兼容，含中文显示名）
+- **项目配置**: `jarvis.yaml` 新增 `platform` 字段，`jarvis init` 自动检测平台并补 `AGENTS.md`
+- **向后兼容**: `jarvis/hooks/` 保留软链指向 `adapters/claude/hooks/`，现有安装不断
+
 ## v1.10.0 (2026-06-06)
 
 ### 工程化

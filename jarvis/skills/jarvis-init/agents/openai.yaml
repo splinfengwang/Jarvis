@@ -1,0 +1,3 @@
+interface:
+  display_name: "项目初始化"
+  short_description: "在 Claude Code 会话中初始化 Jarvis 行为框架。引导式对话：探测项目类型 → 角色协商 → 执行安装 → 验证 → Onboarding..."

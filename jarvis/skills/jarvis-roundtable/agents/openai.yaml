@@ -1,0 +1,3 @@
+interface:
+  display_name: "圆桌审查"
+  short_description: "发起多角色并行审查 — 从 Topic 中提取上下文，spawn 多个独立子 agent 各带不同 persona 独立分析，汇总后向用户汇报。用于"多角..."

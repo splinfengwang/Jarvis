@@ -1,0 +1,1 @@
+../../claude/hooks/jarvis-compact-save.sh

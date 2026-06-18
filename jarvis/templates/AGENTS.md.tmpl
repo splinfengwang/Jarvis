@@ -1,0 +1,23 @@
+# {{PROJECT_NAME}}
+
+> 本项目使用 [Jarvis](https://github.com/linfeng/jarvis) (v{{JARVIS_VERSION}}) 作为智能体框架。
+
+## 启动规则
+
+1. **先检测**：搜索当前上下文，看是否已存在 `[JARVIS_CORE]` 或 `[JARVIS_KNOWLEDGE_SNAPSHOT]` 标记。
+   - 存在 → Jarvis 已完成启动，直接开始工作。
+   - 不存在 → 执行步骤 2。
+2. **Bootstrap**：读取 `jarvis.yaml` → 获取 `jarvis_home` → 手动读取 `$jarvis_home/core/JARVIS_BOOTSTRAP.md` 并遵循。
+3. `AGENTS.md` / `CLAUDE.md` 负责定义角色与项目约束；Jarvis 负责工作方法、写入裁决与技能路由。
+4. Jarvis 的 skill、scripts、references 构成完整的可执行工作流。
+
+## 默认边界
+
+- 不自动修改 Core 文件
+- 不自动知识入库
+- 不把记忆检索命中当事实
+- 写入动作按 Core 写入裁决执行
+
+## 项目配置
+
+见 `jarvis.yaml`。

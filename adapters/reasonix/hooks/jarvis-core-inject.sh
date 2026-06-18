@@ -1,0 +1,1 @@
+../../claude/hooks/jarvis-core-inject.sh
