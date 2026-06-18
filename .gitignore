@@ -13,3 +13,6 @@ build/
 .codegraph/
 .codegraph/
 .reasonix/
+*.tgz
+outputs/
+projects/

@@ -170,6 +170,10 @@ try:
     for key, value in paths.items():
         label = label_map.get(key, key)
         path_lines.append(f"- {label} -> {value}")
+    # Add jarvis runtime root mapping for skill script/reference resolution
+    # Skills reference paths like "jarvis/scripts/confluence_query.py" — the
+    # Agent needs to know where jarvis/ resolves on the filesystem.
+    path_lines.append(f"- jarvis -> {jarvis_home}")
     path_lines.append("")
     core_content = core_content + "\n" + "\n".join(path_lines)
 
