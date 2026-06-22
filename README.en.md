@@ -130,7 +130,7 @@ Jarvis is composed of eight object types.
 |---|---|---|
 | Core | Agent rules: routing, retrieval, write decisions, fact discipline, safety boundaries | `jarvis/core/` |
 | Skill | Triggerable workflows: create/resume/close Topic, extract/ingest knowledge, Roundtable review | `jarvis/skills/` |
-| Hook | Inject Core, guard writes, and checkpoint state in the Claude Code lifecycle | `jarvis/hooks/` |
+| Hook | Inject Core, guard writes, and checkpoint state in the Claude Code lifecycle | `adapters/claude/hooks/` |
 | Topic | State container for a durable work stream | `platform-ops/topics/<Topic>/` |
 | Knowledge | Confirmed or pending knowledge assets, layered as L1-L4/F | `知识库/`, `业务/` |
 | Catalog | Project content-directory registry, including read/write policy | `jarvis.yaml` |
@@ -325,6 +325,30 @@ plugins:
   - medical-safety
 ```
 
+### Install platform adapters
+
+Jarvis can prepare adapters for Claude Code, Reasonix, and Codex:
+
+```bash
+# Claude Code global hooks and skills
+jarvis install --target claude
+
+# Reasonix native config
+jarvis install --target reasonix
+
+# Codex skills
+jarvis install --target codex
+
+# Install all global adapters
+jarvis install --target all
+```
+
+`jarvis install` without `--target` auto-detects from the current project (`reasonix.toml` / `.reasonix/` -> Reasonix, `.codex/` -> Codex, otherwise Claude). The same target can be selected during npm postinstall:
+
+```bash
+JARVIS_TARGET=all npm install -g jarvis-agent
+```
+
 ---
 
 ## Daily Usage
@@ -333,12 +357,30 @@ plugins:
 
 ```bash
 npm install -g jarvis-agent
+
+# Default Claude Code project
 jarvis init ~/my-project
+
+# For one project shared across Claude Code, Reasonix, and Codex:
+jarvis install --target all
+jarvis init ~/shared-project --platform all
+
+# Start Claude Code in the initialized project
 cd ~/my-project
 claude
 ```
 
-After initialization:
+With `--platform all`, Jarvis creates:
+
+- `CLAUDE.md` for Claude Code
+- `AGENTS.md` for Codex / Reasonix
+- `REASONIX.md` as the Reasonix runtime prompt
+- `reasonix.toml` as the project-level Reasonix bridge
+- `jarvis.yaml` as the shared cross-platform config
+
+If global Claude Code hooks already exist, `jarvis init` skips the project-level `.claude/` adapter to avoid duplicate hook execution. If global hooks are absent, the project receives a local `.claude/` adapter.
+
+Typical project structure:
 
 ```text
 my-project/
@@ -356,7 +398,7 @@ my-project/
 └── .claude/
     ├── skills/
     ├── hooks/
-    └── settings.json
+    └── settings.json      # only when global Claude hooks are absent
 ```
 
 ### Start a new work stream

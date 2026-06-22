@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from jarvis.cli import cmd_init
 from jarvis.cli import _sync_project
@@ -37,7 +38,8 @@ class MultiPlatformInstallTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "reasonix.toml").write_text('config_version = 3\n', encoding="utf-8")
-            rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="auto"))
+            with patch.dict(os.environ, {"HOME": str(root / "home")}):
+                rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="auto"))
             self.assertEqual(rc, 0)
             agents = (root / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn("JARVIS_BOOTSTRAP.md", agents)
@@ -55,22 +57,63 @@ class MultiPlatformInstallTests(unittest.TestCase):
     def test_cmd_init_all_profile_creates_cross_platform_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="all"))
+            with patch.dict(os.environ, {"HOME": str(root / "home")}):
+                rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="all"))
             self.assertEqual(rc, 0)
             self.assertTrue((root / ".claude" / "settings.json").exists())
             self.assertTrue((root / "CLAUDE.md").exists())
             self.assertTrue((root / "AGENTS.md").exists())
             self.assertTrue((root / "REASONIX.md").exists())
+            hook = root / ".claude" / "hooks" / "jarvis-core-inject.sh"
+            self.assertEqual(
+                hook.resolve(),
+                REPO / "adapters" / "claude" / "hooks" / "jarvis-core-inject.sh",
+            )
             reasonix = (root / "reasonix.toml").read_text(encoding="utf-8")
             self.assertIn('system_prompt_file = "REASONIX.md"', reasonix)
             self.assertIn(f'paths = ["{JARVIS_HOME / "skills"}"]', reasonix)
             config = (root / "jarvis.yaml").read_text(encoding="utf-8")
             self.assertIn("platform: all", config)
 
+    def test_cmd_init_all_skips_project_claude_adapter_when_global_hooks_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            claude_dir = home / ".claude"
+            claude_dir.mkdir(parents=True)
+            (claude_dir / "settings.json").write_text(
+                json.dumps(
+                    {
+                        "hooks": {
+                            "SessionStart": [
+                                {
+                                    "match": "startup",
+                                    "hooks": [
+                                        {
+                                            "type": "command",
+                                            "command": 'bash "/tmp/jarvis-core-inject.sh"',
+                                        }
+                                    ],
+                                }
+                            ]
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(os.environ, {"HOME": str(home)}):
+                rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="all"))
+            self.assertEqual(rc, 0)
+            self.assertTrue((root / "CLAUDE.md").exists())
+            self.assertTrue((root / "AGENTS.md").exists())
+            self.assertFalse((root / ".claude" / "settings.json").exists())
+            self.assertFalse((root / ".claude" / "hooks").exists())
+
     def test_cmd_init_codex_profile_skips_claude_and_reasonix_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="codex"))
+            with patch.dict(os.environ, {"HOME": str(root / "home")}):
+                rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="codex"))
             self.assertEqual(rc, 0)
             self.assertTrue((root / "AGENTS.md").exists())
             self.assertFalse((root / "reasonix.toml").exists())
@@ -80,7 +123,8 @@ class MultiPlatformInstallTests(unittest.TestCase):
     def test_sync_project_refreshes_reasonix_runtime_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="reasonix"))
+            with patch.dict(os.environ, {"HOME": str(root / "home")}):
+                rc = cmd_init(argparse.Namespace(target=str(root), sync=False, claude_mode="a", platform="reasonix"))
             self.assertEqual(rc, 0)
             (root / "AGENTS.md").write_text("# custom\n", encoding="utf-8")
             (root / "REASONIX.md").write_text("# old\n", encoding="utf-8")
@@ -216,6 +260,37 @@ paths = ["/tmp/existing"]
             self.assertIn(f'bash "{home / ".claude" / "hooks" / "jarvis-core-inject.sh"}"', commands)
             self.assertIn("deny", settings["permissions"])
             self.assertIn("Read(.env)", settings["permissions"]["deny"])
+
+    def test_claude_installer_uses_adapter_hooks_when_jarvis_hooks_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            fake_jarvis = root / "pkg" / "jarvis"
+            fake_hooks = root / "pkg" / "adapters" / "claude" / "hooks"
+            fake_skill = fake_jarvis / "skills" / "jarvis-test"
+            fake_skill.mkdir(parents=True)
+            fake_hooks.mkdir(parents=True)
+            (fake_skill / "SKILL.md").write_text("# test\n", encoding="utf-8")
+            for name in ("jarvis-core-inject.sh", "jarvis-write-guard.sh", "jarvis-compact-save.sh"):
+                hook = fake_hooks / name
+                hook.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+                hook.chmod(hook.stat().st_mode | stat.S_IXUSR)
+
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            env["JARVIS_HOME"] = str(fake_jarvis)
+            subprocess.run(
+                ["bash", str(JARVIS_HOME / "installers" / "claude.sh")],
+                check=True,
+                cwd=str(REPO),
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+
+            linked_hook = home / ".claude" / "hooks" / "jarvis-core-inject.sh"
+            self.assertTrue(linked_hook.is_symlink())
+            self.assertEqual(linked_hook.resolve(), (fake_hooks / "jarvis-core-inject.sh").resolve())
 
     def test_write_guard_honors_bypass_permissions_mode(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,6 +1,6 @@
 # JARVIS_CORE_BRIEF.md
 
-> 版本：v1.10.0
+> 版本：v2.0.0
 > 本文件为 Jarvis 行为规程精简版。Agent 每次会话必读。
 > 详细参考见 `JARVIS_CORE_FULL.md`。
 

@@ -1,6 +1,6 @@
 # JARVIS_BOOTSTRAP.md
 
-> 状态：Jarvis v1.10.0 bootstrap
+> 状态：Jarvis v2.0.0 bootstrap
 > 默认入口：`CLAUDE.md` 只加载本 bootstrap、Core、skills 和必要 references。
 > `AGENT_v3.4.md` 为历史参考和设计背景，日常行为以 `core/JARVIS_CORE_BRIEF.md` + `skills/` 为准。
 

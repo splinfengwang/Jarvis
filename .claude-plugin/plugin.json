@@ -1,6 +1,6 @@
 {
   "name": "jarvis-agent",
-  "version": "1.10.0",
+  "version": "2.0.0",
   "description": "把聊天变成第二大脑 — LLM 长期工作助手框架。Core 行为规程 + 19 个 Skill + Hook 引擎 + 知识库管理。",
   "author": {
     "name": "Lin Feng"

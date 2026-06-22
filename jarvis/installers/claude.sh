@@ -4,7 +4,10 @@ set -eo pipefail
 
 CLAUDE_DIR="${HOME}/.claude"
 SKILLS_SRC="${JARVIS_HOME}/skills"
-HOOKS_SRC="${JARVIS_HOME}/hooks"
+HOOKS_SRC="${JARVIS_HOME}/../adapters/claude/hooks"
+if ! compgen -G "${HOOKS_SRC}/*.sh" > /dev/null; then
+    HOOKS_SRC="${JARVIS_HOME}/hooks"
+fi
 SKILLS_DST="${CLAUDE_DIR}/skills"
 HOOKS_DST="${CLAUDE_DIR}/hooks"
 SETTINGS_PATH="${CLAUDE_DIR}/settings.json"
@@ -12,6 +15,11 @@ SETTINGS_PATH="${CLAUDE_DIR}/settings.json"
 echo "[Jarvis] Installing for Claude Code..."
 
 mkdir -p "$SKILLS_DST" "$HOOKS_DST"
+
+if ! compgen -G "${HOOKS_SRC}/*.sh" > /dev/null; then
+    echo "[Jarvis] ERROR: Claude hooks not found under ${JARVIS_HOME}/../adapters/claude/hooks or ${JARVIS_HOME}/hooks"
+    exit 1
+fi
 
 for skill_dir in "$SKILLS_SRC"/*/; do
     name=$(basename "$skill_dir")

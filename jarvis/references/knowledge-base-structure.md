@@ -36,7 +36,7 @@
 │
 └── .claude/
     ├── skills/                # → 软链接到 jarvis/skills/
-    └── hooks/                 # → 软链接到 jarvis/hooks/
+    └── hooks/                 # → 软链接到 adapters/claude/hooks/
 ```
 
 ## jarvis.yaml paths 配置
@@ -68,6 +68,6 @@ paths:
 - `jarvis.yaml` 存在且 paths 段完整
 - 知识库目录 + wiki索引 + 术语索引 存在
 - platform-ops 目录 + 仪表盘 + log + topics 目录存在
-- .claude/skills 和 .claude/hooks 软链接已建立
+- Claude Code 项目中 .claude/skills 和 .claude/hooks 软链接已建立
 
 `jarvis doctor` 检查这些条件。

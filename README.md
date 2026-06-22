@@ -130,7 +130,7 @@ Jarvis 由八类对象组成。
 |---|---|---|
 | Core | Agent 的行为规程：路由、检索、写入裁决、事实口径、安全边界 | `jarvis/core/` |
 | Skill | 可触发的工作流：创建 Topic、恢复 Topic、知识萃取、入库、圆桌审查等 | `jarvis/skills/` |
-| Hook | 在支持 hook 的运行时中注入 Core、拦截写入、保存 compact 前状态（当前为 Claude Code） | `jarvis/hooks/` |
+| Hook | 在支持 hook 的运行时中注入 Core、拦截写入、保存 compact 前状态（当前为 Claude Code） | `adapters/claude/hooks/` |
 | Topic | 持续工作命题的状态容器 | `platform-ops/topics/<Topic>/` |
 | Knowledge | 已确认或待确认的知识资产，按 L1-L4/F 分层 | `知识库/`、`业务/` |
 | Catalog | 项目内容目录注册表，控制哪些目录只读、哪些可写 | `jarvis.yaml` |
@@ -363,6 +363,12 @@ jarvis install --target reasonix --dry-run
 
 检测逻辑：`jarvis install` 不带参数时自动检测当前项目平台（`reasonix.toml` 或 `.reasonix/` → reasonix，`.codex/` → codex，默认 claude）。也可以通过 `JARVIS_TARGET` 环境变量指定。
 
+npm 安装时也会运行同一套安装器。默认目标是 `claude`；如果要安装三端全局接入，可以使用：
+
+```bash
+JARVIS_TARGET=all npm install -g jarvis-agent
+```
+
 ---
 
 ## 日常使用方式
@@ -371,7 +377,13 @@ jarvis install --target reasonix --dry-run
 
 ```bash
 npm install -g jarvis-agent
+
+# 默认 Claude Code 使用
 jarvis init ~/my-project
+
+# 如果希望同一项目在 Claude Code / Reasonix / Codex 三端通用：
+jarvis install --target all
+jarvis init ~/shared-project --platform all
 
 # 明确指定只初始化某一端
 jarvis init ~/my-project --platform claude
@@ -384,11 +396,12 @@ jarvis init ~/my-project --platform all
 # 不指定时：先自动检测；检测不唯一时会提示你选
 jarvis init ~/my-project
 
+# 在已初始化的项目里启动 Claude Code
 cd ~/my-project
 claude
 ```
 
-`jarvis init` 现在会同时生成：
+`jarvis init --platform all` 会生成：
 
 - `CLAUDE.md`：Claude Code 的项目入口
 - `AGENTS.md`：Codex / Reasonix 的项目入口
@@ -396,7 +409,9 @@ claude
 - `reasonix.toml`：Reasonix 的项目级 bridge（指向 `REASONIX.md`，并排除 `.claude/skills` 重复扫描）
 - `jarvis.yaml`：跨平台统一配置
 
-初始化后项目会得到：
+如果 Claude Code 全局 hooks 尚未安装，项目内还会生成 `.claude/` 适配器；如果已通过 `jarvis install --target claude` 或 npm postinstall 安装全局 hooks，则 `jarvis init` 会跳过项目级 `.claude/`，避免 hooks 重复触发。
+
+初始化后项目通常会得到：
 
 ```text
 my-project/
@@ -414,7 +429,7 @@ my-project/
 └── .claude/
     ├── skills/
     ├── hooks/
-    └── settings.json
+    └── settings.json      # 仅在未检测到全局 Claude hooks 时生成
 ```
 
 ### 开始一个新工作命题

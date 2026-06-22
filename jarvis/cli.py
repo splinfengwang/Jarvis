@@ -39,6 +39,19 @@ def find_jarvis_home() -> Path:
     return Path(__file__).resolve().parent
 
 
+def find_claude_hooks_dir(jarvis_home: Path | None = None) -> Path | None:
+    """Resolve the Claude hook source directory for source and packaged installs."""
+    home = jarvis_home or find_jarvis_home()
+    candidates = [
+        home.parent / "adapters" / "claude" / "hooks",
+        home / "hooks",
+    ]
+    for candidate in candidates:
+        if candidate.is_dir() and any(candidate.glob("*.sh")):
+            return candidate
+    return None
+
+
 def resolve_template(name: str) -> str:
     """Read template file from jarvis/templates/."""
     tmpl_path = find_jarvis_home() / "templates" / name
@@ -126,6 +139,8 @@ def cmd_init(args: argparse.Namespace) -> int:
 
     init_platform = _resolve_init_platform(args, target)
     enable_claude, enable_reasonix, enable_codex = _platform_flags(init_platform)
+    global_claude_hooks = _settings_has_jarvis_hooks(Path.home() / ".claude" / "settings.json")
+    use_project_claude_adapter = enable_claude and not global_claude_hooks
     config_preview = load_project_config(target) or {
         "core": {
             "dashboard": "platform-ops/仪表盘.md",
@@ -143,13 +158,16 @@ def cmd_init(args: argparse.Namespace) -> int:
 
     # Create directories
     dirs = ["知识库/术语", "业务", "platform-ops/topics"]
-    if enable_claude:
+    if use_project_claude_adapter:
         dirs = [".claude/skills", ".claude/hooks"] + dirs
     for d in dirs:
         (target / d).mkdir(parents=True, exist_ok=True)
         print(f"  [dir]  {d}")
 
-    if enable_claude:
+    if enable_claude and global_claude_hooks:
+        print("  [skip] .claude adapter (global Claude hooks already installed)")
+
+    if use_project_claude_adapter:
         # Symlink skills
         skills_dir = jarvis_home / "skills"
         if skills_dir.is_dir():
@@ -159,12 +177,14 @@ def cmd_init(args: argparse.Namespace) -> int:
                     _safe_symlink(skill_path, link, f".claude/skills/{skill_path.name}")
 
         # Symlink hooks
-        hooks_dir = jarvis_home / "hooks"
-        if hooks_dir.is_dir():
+        hooks_dir = find_claude_hooks_dir(jarvis_home)
+        if hooks_dir:
             for hook_path in sorted(hooks_dir.iterdir()):
                 if hook_path.suffix == ".sh":
                     link = target / ".claude" / "hooks" / hook_path.name
                     _safe_symlink(hook_path, link, f".claude/hooks/{hook_path.name}")
+        else:
+            print("  [WARN] Claude hooks source not found; run 'jarvis doctor' after install")
 
     # Generate files from templates
     date = now_date()
@@ -174,7 +194,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         "platform-ops/仪表盘.md": resolve_template("仪表盘.md.tmpl"),
         "platform-ops/log.md": f"# 操作日志\n\n> append-only 操作记录。\n\n---\n\n## [{date}] install | Jarvis v{JARVIS_VERSION} 安装\n",
     }
-    if enable_claude:
+    if use_project_claude_adapter:
         files[".claude/settings.json"] = resolve_template("settings.json.tmpl")
     for rel_path, content in files.items():
         file_path = target / rel_path
@@ -521,6 +541,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         except Exception:
             pass
     enable_claude, enable_reasonix, enable_codex = _platform_flags(profile)
+    global_claude_settings = Path.home() / ".claude" / "settings.json"
+    global_claude_hooks = enable_claude and _settings_has_jarvis_hooks(global_claude_settings)
 
     if config.is_file():
         print(f"  [OK]   jarvis.yaml")
@@ -568,7 +590,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         # Check for residual Jarvis hooks in project settings.json
         settings_path = target / ".claude" / "settings.json"
         if settings_path.is_file():
-            if _settings_has_jarvis_hooks(settings_path) and _settings_has_jarvis_hooks(Path.home() / ".claude" / "settings.json"):
+            if _settings_has_jarvis_hooks(settings_path) and global_claude_hooks:
                 warnings.append("Project settings.json contains Jarvis hooks and global ~/.claude/settings.json also contains Jarvis hooks (may double-fire). Run 'jarvis init --sync' or remove one side.")
 
 
@@ -582,13 +604,16 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     if enable_claude:
         # Check skills symlinks
         skills_dir = target / ".claude" / "skills"
+        if not skills_dir.is_dir() and global_claude_hooks:
+            skills_dir = Path.home() / ".claude" / "skills"
         if skills_dir.is_dir():
             skill_count = 0
             for item in skills_dir.iterdir():
                 if item.is_symlink() or item.is_dir():
                     skill_count += 1
             if skill_count >= 10:
-                print(f"  [OK]   .claude/skills/ ({skill_count} skills)")
+                label = "~/.claude/skills/" if skills_dir.is_relative_to(Path.home()) else ".claude/skills/"
+                print(f"  [OK]   {label} ({skill_count} skills)")
             else:
                 warnings.append(f"Only {skill_count} skills found in .claude/skills/")
         else:
@@ -596,10 +621,13 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
         # Check hooks
         hooks_dir = target / ".claude" / "hooks"
+        if not hooks_dir.is_dir() and global_claude_hooks:
+            hooks_dir = Path.home() / ".claude" / "hooks"
         if hooks_dir.is_dir():
             hook_count = len([f for f in hooks_dir.iterdir() if f.suffix == ".sh"])
             if hook_count >= 3:
-                print(f"  [OK]   .claude/hooks/ ({hook_count} hooks)")
+                label = "~/.claude/hooks/" if hooks_dir.is_relative_to(Path.home()) else ".claude/hooks/"
+                print(f"  [OK]   {label} ({hook_count} hooks)")
             else:
                 warnings.append(f"Only {hook_count} hooks found")
         else:
@@ -609,6 +637,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         settings = target / ".claude" / "settings.json"
         if settings.is_file():
             print(f"  [OK]   .claude/settings.json")
+        elif global_claude_hooks:
+            print(f"  [OK]   ~/.claude/settings.json")
         else:
             warnings.append(".claude/settings.json not found — hooks won't fire")
 

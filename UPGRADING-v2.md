@@ -6,7 +6,7 @@ v2.0 将 Jarvis 从仅支持 Claude Code 扩展为支持三个平台：**Claude 
 
 核心变化：
 - 419 行 inline Python 从 `core-inject.sh` 拆分为独立的 `plugin_resolver.py` + `snapshot.py`
-- Hook 脚本从 `jarvis/hooks/` 迁移到 `adapters/claude/hooks/`（旧位置保留软链）
+- Hook 脚本主位置从 `jarvis/hooks/` 迁移到 `adapters/claude/hooks/`（旧位置仅作为源码树兼容软链）
 - 安装逻辑从单平台改为多平台选择，其中 Reasonix / Codex 不再伪造 Claude hooks
 
 ## 对老用户的影响
@@ -15,7 +15,7 @@ v2.0 将 Jarvis 从仅支持 Claude Code 扩展为支持三个平台：**Claude 
 
 - 已有的 `~/.claude/settings.json` **不受影响**——`postinstall.js` 检测到已有 Jarvis hook 配置会跳过
 - 已有的 `~/.claude/skills/` 软链**仍然有效**
-- `jarvis/hooks/jarvis-core-inject.sh` **路径仍可访问**（软链）
+- 源码树中的 `jarvis/hooks/jarvis-core-inject.sh` **路径仍可访问**（兼容软链）；发布包和新安装优先使用 `adapters/claude/hooks/`
 - `npm update -g jarvis-agent` 会**自动适配**新结构
 
 ### ⚠️ 可选的优化步骤
@@ -53,7 +53,7 @@ jarvis install --target codex
 ```
 v1.x                        v2.0
 ────                        ────
-jarvis/hooks/               jarvis/hooks/ → adapters/claude/hooks/ (symlink)
+jarvis/hooks/               jarvis/hooks/ → adapters/claude/hooks/ (source-tree compatibility symlink)
                             adapters/
                               claude/hooks/    # 实体文件
                               reasonix/hooks/  # 兼容保留，不再作为主接入点
@@ -67,10 +67,10 @@ jarvis/core/                jarvis/core/ + plugin_resolver.py + snapshot.py
 ## 常见问题
 
 **Q: 升级后 hook 不生效了？**
-A: 检查软链：`ls -la ~/.claude/hooks/jarvis-core-inject.sh`，应指向 `adapters/claude/hooks/core-inject.sh`。
+A: 运行 `jarvis install --target claude` 后检查软链：`ls -la ~/.claude/hooks/jarvis-core-inject.sh`，应指向当前安装目录中的 `adapters/claude/hooks/jarvis-core-inject.sh` 或兼容的 `jarvis/hooks/jarvis-core-inject.sh`。
 
 **Q: 如何确认安装完整性？**
-A: 运行 `jarvis doctor`，应该显示 "all 16 checks passed"。
+A: 在项目根运行 `jarvis doctor`，应无 ERROR；如果是 Reasonix / Codex 项目，重点确认 `AGENTS.md`、`REASONIX.md`、`reasonix.toml` 或 Codex skill 状态。
 
 **Q: 自定义的 settings.json 会被覆盖吗？**
 A: 不会。安装器使用合并策略，已有配置保持不变，只追加缺失的 hook 事件。
