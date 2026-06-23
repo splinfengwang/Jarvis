@@ -349,6 +349,24 @@ jarvis install --target all
 JARVIS_TARGET=all npm install -g jarvis-agent
 ```
 
+The installer is safe to rerun during upgrades:
+
+- Claude Code: relinks stale Jarvis skill/hook symlinks and replaces old Jarvis hook commands.
+- Reasonix: writes native `config.toml` / prompt wiring and removes legacy Jarvis hooks from `~/.reasonix/settings.json`.
+- Codex: refreshes global skill links; project bootstrap still comes from `AGENTS.md`.
+
+For an existing project:
+
+```bash
+jarvis upgrade ~/my-project
+jarvis install --target all
+jarvis init --sync ~/my-project
+```
+
+Core rule upgrades are a two-step process: upgrade the framework and global adapters first, then run `jarvis init --sync <project>` for each existing project. Running only `upgrade` / `install` does not refresh an already embedded `AGENTS.md` / `REASONIX.md` runtime block.
+
+`--sync` updates `jarvis.yaml` version, `jarvis_home`, and missing `platform`, refreshes `AGENTS.md` / `REASONIX.md` / `reasonix.toml`, and removes old project-level Jarvis hooks from `.claude/settings.json`. If npm / pipx has already upgraded the framework, start from `jarvis install --target all`.
+
 ---
 
 ## Daily Usage

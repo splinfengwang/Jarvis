@@ -383,27 +383,61 @@ def _sync_project(target: Path) -> int:
     print()
 
     changed = False
+    jarvis_home = find_jarvis_home()
+    detected_profile = detect_platform(str(target))
+    profile = config.get("platform") or detected_profile
 
-    # Sync version in jarvis.yaml
+    raw = config_path.read_text(encoding='utf-8')
+
+    # Sync version, install path, and platform in jarvis.yaml.
     if proj_version != JARVIS_VERSION:
-        raw = config_path.read_text(encoding='utf-8')
         raw = re.sub(
             r'jarvis_version:\s*"[^"]*"',
             f'jarvis_version: "{JARVIS_VERSION}"',
             raw
         )
-        config_path.write_text(raw, encoding='utf-8')
         print(f"  [sync] jarvis.yaml: v{proj_version} → v{JARVIS_VERSION}")
         changed = True
     else:
         print(f"  [ok]   jarvis.yaml version is current")
 
-    profile = config.get("platform", detect_platform(str(target)))
+    current_home = str(config.get("jarvis_home", ""))
+    if current_home != str(jarvis_home):
+        if re.search(r'^jarvis_home:\s*".*"$', raw, re.MULTILINE):
+            raw = re.sub(
+                r'^jarvis_home:\s*".*"$',
+                f'jarvis_home: "{jarvis_home}"',
+                raw,
+                flags=re.MULTILINE,
+            )
+        else:
+            raw = raw.rstrip() + f'\njarvis_home: "{jarvis_home}"\n'
+        print(f"  [sync] jarvis.yaml: jarvis_home → {jarvis_home}")
+        changed = True
+
+    if not config.get("platform"):
+        if re.search(r'^jarvis_home:\s*".*"$', raw, re.MULTILINE):
+            raw = re.sub(
+                r'^(jarvis_home:\s*".*"$)',
+                rf'\1\nplatform: {profile}',
+                raw,
+                count=1,
+                flags=re.MULTILINE,
+            )
+        else:
+            raw = raw.rstrip() + f'\nplatform: {profile}\n'
+        print(f"  [sync] jarvis.yaml: platform → {profile}")
+        changed = True
+
+    if raw != config_path.read_text(encoding='utf-8'):
+        config_path.write_text(raw, encoding='utf-8')
+
     enable_claude, enable_reasonix, enable_codex = _platform_flags(profile)
 
-    # Clean project-level Jarvis hooks
+    # Clean project-level Jarvis hooks whenever present. Old projects may lack
+    # `platform: claude` even though `.claude/settings.json` still fires hooks.
     settings_path = target / ".claude" / "settings.json"
-    if enable_claude and settings_path.is_file():
+    if settings_path.is_file():
         cleaned = _clean_project_settings(settings_path)
         if cleaned:
             print("  [sync] .claude/settings.json: removed Jarvis hooks (global hooks now handle this)")
@@ -413,7 +447,6 @@ def _sync_project(target: Path) -> int:
     elif enable_claude:
         print(f"  [skip] .claude/settings.json not found")
 
-    jarvis_home = find_jarvis_home()
     current_config = load_project_config(target) or config
 
     if enable_reasonix or enable_codex:
@@ -477,6 +510,8 @@ def _clean_project_settings(settings_path: Path) -> bool:
         for entry in matcher_entries:
             inner_hooks = entry.get('hooks', [])
             cleaned = [h for h in inner_hooks if not _is_jarvis_hook(h)]
+            if len(cleaned) != len(inner_hooks):
+                changed = True
             if cleaned:
                 entry['hooks'] = cleaned
                 kept_entries.append(entry)

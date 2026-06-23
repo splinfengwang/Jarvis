@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import tomllib
 from pathlib import Path
 
 VALID_PLATFORMS = ("claude", "reasonix", "codex", "all")
@@ -40,6 +39,8 @@ def detect_platforms(project_root: str = ".") -> list[str]:
 def detect_platform(project_root: str = ".") -> str:
     """Detect the agent platform used by a project directory."""
     detected = detect_platforms(project_root)
+    if len(detected) > 1:
+        return "all"
     if "reasonix" in detected:
         return "reasonix"
     if "codex" in detected:
@@ -199,7 +200,7 @@ def merge_reasonix_config_text(
     Returns: (updated_text, prompt_managed, existing_prompt)
     """
     raw = content or ""
-    parsed = tomllib.loads(raw) if raw.strip() else {}
+    parsed = _loads_toml(raw) if raw.strip() else {}
 
     existing_prompt = None
     agent_cfg = parsed.get("agent")
@@ -241,6 +242,49 @@ def merge_reasonix_config_text(
             excluded_paths.append(item)
     updated = upsert_toml_key(updated, "skills", "excluded_paths", json.dumps(excluded_paths, ensure_ascii=False))
     return updated, prompt_managed, existing_prompt
+
+
+def _loads_toml(raw: str) -> dict:
+    """Parse TOML when a parser is available; hooks must import on Python 3.10 too."""
+    try:
+        import tomllib  # type: ignore[import-not-found]
+    except ModuleNotFoundError:
+        try:
+            import tomli as tomllib  # type: ignore[import-not-found]
+        except ModuleNotFoundError:
+            return _parse_toml_fallback(raw)
+    try:
+        return tomllib.loads(raw)
+    except Exception:
+        return _parse_toml_fallback(raw)
+
+
+def _parse_toml_fallback(raw: str) -> dict:
+    """Minimal TOML fallback for Jarvis-managed Reasonix keys."""
+    result: dict[str, dict] = {}
+    for section in ("agent", "skills"):
+        block = _extract_toml_section(raw, section)
+        if not block:
+            continue
+        section_data: dict[str, object] = {}
+        prompt = re.search(r'(?m)^\s*system_prompt_file\s*=\s*"([^"]*)"', block)
+        if prompt:
+            section_data["system_prompt_file"] = prompt.group(1)
+        for key in ("paths", "excluded_paths"):
+            match = re.search(rf'(?m)^\s*{re.escape(key)}\s*=\s*\[(.*?)\]', block, re.S)
+            if match:
+                section_data[key] = re.findall(r'"([^"]*)"', match.group(1))
+        if section_data:
+            result[section] = section_data
+    return result
+
+
+def _extract_toml_section(raw: str, section: str) -> str:
+    start = _find_section_start(raw, section)
+    if start < 0:
+        return ""
+    end = _find_section_end(raw, start)
+    return raw[start:end]
 
 
 def upsert_marked_block(text: str, block: str) -> str:

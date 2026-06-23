@@ -24,7 +24,16 @@ fi
 for skill_dir in "$SKILLS_SRC"/*/; do
     name=$(basename "$skill_dir")
     target="$SKILLS_DST/$name"
-    if [ -e "$target" ]; then
+    if [ -L "$target" ]; then
+        current=$(readlink "$target")
+        if [ "$current" = "$skill_dir" ]; then
+            echo "  SKIP  skill $name (already current)"
+        else
+            rm "$target"
+            ln -s "$skill_dir" "$target"
+            echo "  RELINK skill $name"
+        fi
+    elif [ -e "$target" ]; then
         echo "  SKIP  skill $name (already exists)"
     else
         ln -s "$skill_dir" "$target"
@@ -35,8 +44,17 @@ done
 for hook_file in "$HOOKS_SRC"/*.sh; do
     name=$(basename "$hook_file")
     target="$HOOKS_DST/$name"
-    if [ -e "$target" ]; then
-        echo "  SKIP  hook $name (already exists)"
+    if [ -L "$target" ]; then
+        current=$(readlink "$target")
+        if [ "$current" = "$hook_file" ]; then
+            echo "  SKIP  hook $name (already current)"
+        else
+            rm "$target"
+            ln -s "$hook_file" "$target"
+            echo "  RELINK hook $name"
+        fi
+    elif [ -e "$target" ]; then
+        echo "  SKIP  hook $name (already exists, not a symlink)"
     else
         ln -s "$hook_file" "$target"
         echo "  LINK  hook $name"
@@ -105,8 +123,23 @@ else:
     current = {}
 
 hooks = current.setdefault("hooks", {})
+jarvis_hook_names = (
+    "jarvis-core-inject.sh",
+    "jarvis-write-guard.sh",
+    "jarvis-compact-save.sh",
+)
 for event, new_entries in incoming.get("hooks", {}).items():
     existing_entries = hooks.setdefault(event, [])
+    cleaned_entries = []
+    for existing_entry in existing_entries:
+        kept_hooks = [
+            hook for hook in existing_entry.get("hooks", [])
+            if not any(name in hook.get("command", "") for name in jarvis_hook_names)
+        ]
+        if kept_hooks:
+            existing_entry["hooks"] = kept_hooks
+            cleaned_entries.append(existing_entry)
+    existing_entries[:] = cleaned_entries
     existing_commands = {
         hook.get("command", "")
         for entry in existing_entries

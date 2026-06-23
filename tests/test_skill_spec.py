@@ -20,11 +20,16 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import re
 
 REPO = Path(__file__).resolve().parents[1]
 SKILLS = REPO / "jarvis" / "skills"
 CORE_DIR = REPO / "jarvis" / "core"
 REFS = REPO / "jarvis" / "references"
+
+version_text = (REPO / "jarvis" / "__init__.py").read_text(encoding="utf-8")
+version_match = re.search(r'__version__\s*=\s*"([^"]+)"', version_text)
+JARVIS_VERSION = version_match.group(1) if version_match else ""
 
 PASS = 0
 FAIL = 0
@@ -172,7 +177,7 @@ def test_t8_core_full() -> None:
     check(fp.exists(), "CORE_FULL 存在")
     if not fp.exists(): return
     f = fp.read_text(encoding="utf-8")
-    check("v1.8.0" in f, "版本 v1.8.0")
+    check(f"v{JARVIS_VERSION}" in f, f"版本 v{JARVIS_VERSION}")
     check("jarvis-catalog-register" in f, "路由表: catalog-register")
     check("jarvis-roundtable" in f, "路由表: roundtable")
     check("jarvis-persona-create" in f, "路由表: persona-create")

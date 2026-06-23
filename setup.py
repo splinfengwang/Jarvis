@@ -45,7 +45,9 @@ setup(
         ],
     },
     python_requires=">=3.10",
-    install_requires=[],
+    install_requires=[
+        "tomli; python_version < '3.11'",
+    ],
     extras_require={
         "openviking": ["openviking-client"],
     },
