@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.0.1 (2026-06-26)
+
+### 协议优化
+- **讨论记录产物回链**：`讨论记录.md` 新增“产物生成事件”规范，显式记录“讨论/决策 → 过程稿/定稿”的映射，提升 Topic 恢复和上下文追溯能力
+- **职责边界收紧**：明确 `讨论记录.md` 记录关系和状态，不复制产物正文，避免 Topic 过程记录与正式产物双写漂移
+- **知识萃取对齐**：`jarvis-knowledge-extract` 优先读取产物生成事件建立证据链，目录扫描退为补漏逻辑
+
+### 文档同步
+- `topic-lifecycle.md`、`knowledge-model.md`、`jarvis-knowledge-extract/SKILL.md` 三处规则同步更新，统一“讨论记录存关系，产物文件存正文”的约束
+
 ## v2.0.0 (2026-06-18)
 
 ### 三平台适配（Claude Code / Reasonix / Codex）

@@ -290,11 +290,11 @@ related: [[术语A]] [[术语B]] [[术语C]]
 
 | 维度 | 内容 |
 |------|------|
-| **存什么** | 四件套骨架文件（索引.md / _上下文快照.md / _准入检查单.md / 讨论记录.md）+ 元数据文件（_萃取清单.md / _evidence-pack.json 等）。**不存业务产出文件**。 |
+| **存什么** | 四件套骨架文件（索引.md / _上下文快照.md / _准入检查单.md / 讨论记录.md）+ 元数据文件（_萃取清单.md / _evidence-pack.json 等）。`讨论记录.md` 负责保存决策链，以及“讨论/结论 → 过程稿/定稿”的产物生成事件。**不存业务产出文件正文**。 |
 | **命名** | 目录：`YYYYMMDD_主题简称`。骨架和元数据文件名固定。 |
 | **创建者** | 骨架：`jarvis-topic-create`。元数据：各 skill 运行时写入。 |
-| **消费者** | `jarvis-topic-resume`（恢复上下文）、`jarvis-topic-freeze` / `jarvis-topic-close`（状态同步）、`jarvis-knowledge-extract`（读取 _萃取清单 等元数据）。 |
-| **维护** | 冻结/关闭时由对应 skill 更新快照和索引。萃取完成 → Topic ⚪Done 后目录保留。 |
+| **消费者** | `jarvis-topic-resume`（恢复上下文）、`jarvis-topic-freeze` / `jarvis-topic-close`（状态同步）、`jarvis-knowledge-extract`（读取 _萃取清单 等元数据，并利用讨论记录中的产物生成事件建立证据链）。 |
+| **维护** | 冻结/关闭时由对应 skill 更新快照和索引；讨论产生产物时同步追加产物生成事件。萃取完成 → Topic ⚪Done 后目录保留。 |
 | **归档** | 不变更。 |
 
 ### platform-ops/topics/<Topic>/定稿/

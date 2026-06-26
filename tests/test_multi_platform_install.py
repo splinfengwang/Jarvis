@@ -14,6 +14,7 @@ from unittest.mock import patch
 from jarvis.cli import cmd_init
 from jarvis.cli import _sync_project
 from jarvis.platform_support import _parse_toml_fallback, detect_platform, detect_platforms, merge_reasonix_config_text
+from jarvis import __version__ as JARVIS_VERSION
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -165,7 +166,7 @@ print(ps.DEFAULT_SEMANTIC_PATHS["wiki_index"])
             (root / "AGENTS.md").write_text("# custom\n", encoding="utf-8")
             (root / "REASONIX.md").write_text("# old\n", encoding="utf-8")
             (root / "jarvis.yaml").write_text(
-                (root / "jarvis.yaml").read_text(encoding="utf-8").replace('jarvis_version: "2.0.0"', 'jarvis_version: "1.9.0"'),
+                (root / "jarvis.yaml").read_text(encoding="utf-8").replace(f'jarvis_version: "{JARVIS_VERSION}"', 'jarvis_version: "1.9.0"'),
                 encoding="utf-8",
             )
             sync_rc = _sync_project(root)
@@ -228,7 +229,7 @@ print(ps.DEFAULT_SEMANTIC_PATHS["wiki_index"])
             sync_rc = _sync_project(root)
             self.assertEqual(sync_rc, 0)
             config = (root / "jarvis.yaml").read_text(encoding="utf-8")
-            self.assertIn('jarvis_version: "2.0.0"', config)
+            self.assertIn(f'jarvis_version: "{JARVIS_VERSION}"', config)
             self.assertIn(f'jarvis_home: "{JARVIS_HOME}"', config)
             self.assertIn("platform: all", config)
             self.assertTrue((root / "REASONIX.md").is_file())

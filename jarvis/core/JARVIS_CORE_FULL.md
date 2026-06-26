@@ -1,6 +1,6 @@
 # JARVIS_CORE.md
 
-> 版本：v2.0.0
+> 版本：v2.0.1
 > 状态：production candidate
 > 基线来源：Jarvis Runtime v0.2 + KF580 剥离
 > 使用边界：本文件是 Jarvis 框架的核心行为规程。会话启动时通过 SessionStart hook 注入上下文。
